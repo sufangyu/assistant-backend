@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { BaseService } from '@/common/service/base';
 import { Tag } from './entities/tag.entity';
 import { CreateTagDto } from './dto/create-tag.dto';
@@ -25,6 +25,10 @@ export class TagService extends BaseService {
 
   findOne(id: number) {
     return this.tagRepository.findOneBy({ id });
+  }
+
+  findMore(ids: number[]) {
+    return this.tagRepository.findBy({ id: In(ids) });
   }
 
   async update(id: number, updateTagDto: UpdateTagDto) {

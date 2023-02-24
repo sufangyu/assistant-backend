@@ -7,7 +7,8 @@ import { BaseService } from '@/common/service/base';
 import { DataSource, In, Repository } from 'typeorm';
 import { Share } from './entities/share.entity';
 import { CreateShareDto } from './dto/create-share.dto';
-import { CategoryService } from './../category/category.service';
+import { CategoryService } from '../category/category.service';
+import { TagService } from '../tag/tag.service';
 
 @Injectable()
 export class ShareService extends BaseService {
@@ -15,6 +16,7 @@ export class ShareService extends BaseService {
     @InjectRepository(Share)
     private readonly shareRepository: Repository<Share>,
     private readonly categoryService: CategoryService,
+    private readonly tagService: TagService,
     private readonly dataSource: DataSource,
   ) {
     super();
@@ -28,7 +30,7 @@ export class ShareService extends BaseService {
    * @memberof ShareService
    */
   async create(createShareDto: CreateShareDto): Promise<Share> {
-    console.log('createShareDto: ', createShareDto);
+    // console.log('createShareDto: ', createShareDto);
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -40,11 +42,11 @@ export class ShareService extends BaseService {
         createShareDto.categoryId,
       );
 
-      // 通过标签 ID 集合，查处对应的 entities 示例,
+      // 通过标签 ID 集合，查处对应的 entities 示例
       // 同时赋值给 ShareDto 的 tags 参数, 用于给 share_tag_id 表添加数据
-      createShareDto.tags = await queryRunner.manager.findBy(Tag, {
-        id: In(createShareDto.tagIds),
-      });
+      createShareDto.tags = await this.tagService.findMore(
+        createShareDto.tagIds,
+      );
 
       const result = await this.shareRepository.save(createShareDto);
       await queryRunner.commitTransaction();
@@ -88,31 +90,39 @@ export class ShareService extends BaseService {
     await queryRunner.startTransaction();
 
     try {
-      // const category = await this.categoryService.findOne(
-      //   updateShareDto.categoryId,
-      // );
-      const category = await queryRunner.manager.findOneBy(Category, {
-        id: updateShareDto.categoryId,
-      });
-
+      const category = await this.categoryService.findOne(
+        updateShareDto.categoryId,
+      );
       // 通过标签 ID 集合，查处对应的 entities 示例,
       // 同时赋值给 ShareDto 的 tags 参数, 用于给 share_tag_id 表添加数据
-      const tags = await queryRunner.manager.findBy(Tag, {
-        id: In(updateShareDto.tagIds),
-      });
+      const tags = await this.tagService.findMore(updateShareDto.tagIds);
 
-      // UpdateShareDto
-      return this.shareRepository.update(id, {
-        title: updateShareDto.title,
-        description: updateShareDto.description,
-        category,
-        tags,
-      });
+      console.log('update category, tags: ', category, tags);
+
+      const { title, description } = updateShareDto;
+      result.title = title;
+      result.description = description;
+      result.category = category;
+      result.tags = tags;
+
+      return result.save();
     } catch (err) {
       await queryRunner.rollbackTransaction();
     } finally {
       await queryRunner.release();
     }
+  }
+
+  async remove(id: number) {
+    const result = await this.shareRepository.findOne({
+      where: { id },
+    });
+
+    if (!result) {
+      this.error('分享内容不存在');
+    }
+
+    return this.shareRepository.softRemove(result);
   }
 
   /**

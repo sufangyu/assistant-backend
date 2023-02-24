@@ -31,7 +31,7 @@ export class Share extends BaseEntity {
     name: 'url',
     comment: '链接地址',
   })
-  url: string;
+  url?: string;
 
   @Column({
     type: 'varchar',
@@ -58,7 +58,7 @@ export class Share extends BaseEntity {
 
   @ManyToOne(() => Category, (category) => category.id)
   @JoinColumn({ name: 'category_id' })
-  category: Category;
+  public category: Category;
 
   @ManyToMany(() => Tag, (tag) => tag.shares, {
     cascade: true,
@@ -70,7 +70,7 @@ export class Share extends BaseEntity {
     joinColumns: [{ name: 'share_id' }],
     inverseJoinColumns: [{ name: 'tag_id' }],
   })
-  tags: Tag[];
+  public tags: Tag[];
 
   @CreateDateColumn({
     type: 'timestamp',

@@ -30,7 +30,7 @@ export class Tag extends BaseEntity {
   name: string;
 
   @ManyToMany(() => Share, (share) => share.tags)
-  shares: Share[];
+  public shares: Share[];
 
   @CreateDateColumn({
     type: 'timestamp',

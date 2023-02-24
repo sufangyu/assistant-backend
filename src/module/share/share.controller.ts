@@ -6,6 +6,7 @@ import {
   Query,
   Patch,
   Param,
+  Delete,
 } from '@nestjs/common';
 import { ShareService } from './share.service';
 import { CreateShareDto } from './dto/create-share.dto';
@@ -74,8 +75,8 @@ export class ShareController {
     return this.shareService.update(+id, updateShareDto);
   }
 
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.shareService.remove(+id);
-  // }
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.shareService.remove(+id);
+  }
 }

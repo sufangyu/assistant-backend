@@ -8,5 +8,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
   imports: [TypeOrmModule.forFeature([Tag])],
   controllers: [TagController],
   providers: [TagService],
+  // 暴露提供外部调用
+  exports: [TagService],
 })
 export class TagModule {}
