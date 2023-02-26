@@ -79,4 +79,9 @@ export class ShareController {
   remove(@Param('id') id: string) {
     return this.shareService.remove(+id);
   }
+
+  @Get('website')
+  websiteInfo(@Query('url') url: string) {
+    return this.shareService.getWebsiteInfo(url);
+  }
 }

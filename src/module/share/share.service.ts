@@ -1,12 +1,14 @@
-import { Category } from '@/module/category/entities/category.entity';
-import { UpdateShareDto } from './dto/update-share.dto';
-import { Tag } from '@/module/tag/entities/tag.entity';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
+import { HttpService } from '@nestjs/axios';
+import { AxiosResponse } from 'axios';
+import { load } from 'cheerio';
+import { firstValueFrom } from 'rxjs';
 import { BaseService } from '@/common/service/base';
-import { DataSource, In, Repository } from 'typeorm';
 import { Share } from './entities/share.entity';
 import { CreateShareDto } from './dto/create-share.dto';
+import { UpdateShareDto } from './dto/update-share.dto';
 import { CategoryService } from '../category/category.service';
 import { TagService } from '../tag/tag.service';
 
@@ -18,6 +20,7 @@ export class ShareService extends BaseService {
     private readonly categoryService: CategoryService,
     private readonly tagService: TagService,
     private readonly dataSource: DataSource,
+    private readonly httpService: HttpService,
   ) {
     super();
   }
@@ -230,5 +233,33 @@ export class ShareService extends BaseService {
     });
 
     return total;
+  }
+
+  /**
+   * 获取网站信息
+   *
+   * @param {string} url
+   * @memberof ShareService
+   */
+  async getWebsiteInfo(url: string) {
+    // FIXME: https://typeorm.io/many-to-many-relations => 请求 404
+    const webUrl = decodeURIComponent(url);
+    const UA =
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36';
+    const { data } = await firstValueFrom<AxiosResponse>(
+      this.httpService.get(webUrl, { headers: { 'User-Agent': UA } }),
+    );
+
+    const $ = load(data);
+    let title = $('title').text();
+    let description = $('meta[name=description]').attr('content');
+
+    if (webUrl.includes('mp.weixin.qq.com')) {
+      // 微信公众号
+      title = $('meta[property=og:title]').attr('content');
+      description = $('meta[property=og:description]').attr('content');
+    }
+
+    return { title, description };
   }
 }

@@ -4,6 +4,7 @@ import {
   ArgumentsHost,
   HttpException,
   HttpStatus,
+  NotFoundException,
 } from '@nestjs/common';
 import { EntityPropertyNotFoundError } from 'typeorm';
 
@@ -25,7 +26,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const request = ctx.getRequest();
 
     console.log(
-      `--------------- ${request.method}, ${request.url}------------------`,
+      `--------------- ${request.method}, ${request.url} ------------------`,
     );
     console.error('AllExceptionsFilter exception: ', exception);
     console.log('---------------------------------');
@@ -49,7 +50,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
     if (
       exception instanceof EntityPropertyNotFoundError ||
       exception instanceof TypeError ||
-      exception instanceof Error
+      exception instanceof Error ||
+      exception instanceof NotFoundException
     ) {
       message = exception.message;
     }
