@@ -7,6 +7,14 @@ import { ValidationPipe } from './pipe/validate.pipe';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // 跨域设置
+  app.enableCors({
+    credentials: true,
+    origin(origin, callback) {
+      callback(null, true);
+    },
+  });
+
   // 验证 & 拦截器 & 过滤器
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalInterceptors(new AllResponseInterceptor());
