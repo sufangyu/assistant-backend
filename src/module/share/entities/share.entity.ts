@@ -13,6 +13,7 @@ import {
 } from 'typeorm';
 import { Category } from '@/module/category/entities/category.entity';
 import { Tag } from '@/module/tag/entities/tag.entity';
+import { Robot } from '@/module/robot/entities/robot.entity';
 
 @Entity()
 export class Share extends BaseEntity {
@@ -60,6 +61,7 @@ export class Share extends BaseEntity {
   @JoinColumn({ name: 'category_id' })
   public category: Category;
 
+  // 关联标签
   @ManyToMany(() => Tag, (tag) => tag.shares, {
     cascade: true,
     onDelete: 'CASCADE',
@@ -71,6 +73,19 @@ export class Share extends BaseEntity {
     inverseJoinColumns: [{ name: 'tag_id' }],
   })
   public tags: Tag[];
+
+  // 发布关联的机器人
+  @ManyToMany(() => Robot, (robot) => robot.shares, {
+    cascade: true,
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  })
+  @JoinTable({
+    name: 'share_robot_id', // table name
+    joinColumns: [{ name: 'share_id' }],
+    inverseJoinColumns: [{ name: 'robot_id' }],
+  })
+  public robots: Robot[];
 
   @CreateDateColumn({
     type: 'timestamp',

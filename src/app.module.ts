@@ -7,6 +7,7 @@ import { AppService } from './app.service';
 import { ShareModule } from './module/share/share.module';
 import { CategoryModule } from './module/category/category.module';
 import { TagModule } from './module/tag/tag.module';
+import { RobotModule } from './module/robot/robot.module';
 
 // console.log('config', config.db);
 console.log('process.env.NODE_ENV:', process.env.NODE_ENV);
@@ -32,6 +33,7 @@ console.log('process.env.NODE_ENV:', process.env.NODE_ENV);
     ShareModule,
     CategoryModule,
     TagModule,
+    RobotModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -30,7 +30,7 @@ export class CreateShareDto {
     },
   )
   @IsOptional()
-  tagIds: number[];
+  tagIds?: number[];
 
   // 用于 save 时赋值, 不用做参数校验
   category?: Category;

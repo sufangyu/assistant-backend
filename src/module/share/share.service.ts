@@ -33,7 +33,7 @@ export class ShareService extends BaseService {
    * @memberof ShareService
    */
   async create(createShareDto: CreateShareDto): Promise<Share> {
-    // console.log('createShareDto: ', createShareDto);
+    console.log('createShareDto: ', createShareDto);
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -48,11 +48,14 @@ export class ShareService extends BaseService {
       // 通过标签 ID 集合，查处对应的 entities 示例
       // 同时赋值给 ShareDto 的 tags 参数, 用于给 share_tag_id 表添加数据
       createShareDto.tags = await this.tagService.findMore(
-        createShareDto.tagIds,
+        createShareDto.tagIds ?? [],
       );
 
       const result = await this.shareRepository.save(createShareDto);
       await queryRunner.commitTransaction();
+
+      // TODO: 机器人发送
+
       return result;
     } catch (err) {
       await queryRunner.rollbackTransaction();
