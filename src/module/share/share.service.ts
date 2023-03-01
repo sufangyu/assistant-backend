@@ -11,6 +11,8 @@ import { CreateShareDto } from './dto/create-share.dto';
 import { UpdateShareDto } from './dto/update-share.dto';
 import { CategoryService } from '../category/category.service';
 import { TagService } from '../tag/tag.service';
+import { RobotService } from '../robot/robot.service';
+import { ROBOT_MESSAGE_TEMPLATE } from '@/enums';
 
 @Injectable()
 export class ShareService extends BaseService {
@@ -19,6 +21,7 @@ export class ShareService extends BaseService {
     private readonly shareRepository: Repository<Share>,
     private readonly categoryService: CategoryService,
     private readonly tagService: TagService,
+    private readonly robotService: RobotService,
     private readonly dataSource: DataSource,
     private readonly httpService: HttpService,
   ) {
@@ -47,14 +50,30 @@ export class ShareService extends BaseService {
 
       // 通过标签 ID 集合，查处对应的 entities 示例
       // 同时赋值给 ShareDto 的 tags 参数, 用于给 share_tag_id 表添加数据
-      createShareDto.tags = await this.tagService.findMore(
-        createShareDto.tagIds ?? [],
-      );
+      if ((createShareDto.tagIds ?? []).length > 0) {
+        createShareDto.tags = await this.tagService.findMore(
+          createShareDto.tagIds,
+        );
+      }
+
+      // 机器人
+      if (createShareDto.robotIds ?? []) {
+        createShareDto.robots = await this.robotService.findMore(
+          createShareDto.robotIds,
+        );
+      }
+
+      console.log(createShareDto);
 
       const result = await this.shareRepository.save(createShareDto);
       await queryRunner.commitTransaction();
 
-      // TODO: 机器人发送
+      // 机器人发送
+      this.robotService.sendMessageForShare(
+        createShareDto.robots,
+        ROBOT_MESSAGE_TEMPLATE.EACH,
+        [result],
+      );
 
       return result;
     } catch (err) {

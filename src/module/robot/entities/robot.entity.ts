@@ -49,12 +49,12 @@ export class Robot extends BaseEntity {
     type: 'varchar',
     nullable: false,
     length: 250,
-    name: 'webhooks',
-    comment: '机器人 Webhooks',
+    name: 'webhook',
+    comment: '机器人 Webhook',
   })
-  webhooks: string;
+  webhook: string;
 
-  @ManyToMany(() => Share, (share) => share.tags)
+  @ManyToMany(() => Share, (share) => share.robots)
   public shares: Share[];
 
   @CreateDateColumn({

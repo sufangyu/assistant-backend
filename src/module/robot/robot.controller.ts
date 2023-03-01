@@ -39,4 +39,28 @@ export class RobotController {
   remove(@Param('id') id: string) {
     return this.robotService.remove(+id);
   }
+
+  @Post('send')
+  // TEST
+  sendMessage() {
+    const robots = [
+      {
+        id: 1,
+        name: 'Web群',
+        type: 1,
+        webhook:
+          'https://open.feishu.cn/open-apis/bot/v2/hook/b633b1fe-f15c-4a8b-b9ad-1b595e42a263',
+      },
+      {
+        id: 2,
+        name: '移动群',
+        type: 1,
+        webhook:
+          'https://open.feishu.cn/open-apis/bot/v2/hook/b633b1fe-f15c-4a8b-b9ad-1b595e42a263',
+      },
+    ];
+    const template = 1;
+    const share = { url: '标题', title: 'xxx', description: 'yyy' };
+    return this.robotService.sendMessageForShare(robots, template, [share]);
+  }
 }

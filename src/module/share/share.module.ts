@@ -6,12 +6,14 @@ import { ShareController } from './share.controller';
 import { Share } from './entities/share.entity';
 import { CategoryModule } from '../category/category.module';
 import { TagModule } from '../tag/tag.module';
+import { RobotModule } from '../robot/robot.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Share]),
     CategoryModule,
     TagModule,
+    RobotModule,
     HttpModule,
   ],
   controllers: [ShareController],

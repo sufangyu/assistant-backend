@@ -1,6 +1,7 @@
 import { IsString, IsNumber, IsNotEmpty, IsOptional } from 'class-validator';
 import { Category } from '@/module/category/entities/category.entity';
 import { Tag } from '@/module/tag/entities/tag.entity';
+import { Robot } from '@/module/robot/entities/robot.entity';
 
 export class CreateShareDto {
   @IsString()
@@ -32,7 +33,21 @@ export class CreateShareDto {
   @IsOptional()
   tagIds?: number[];
 
+  @IsNumber(
+    {
+      allowNaN: false,
+      allowInfinity: false,
+    },
+    {
+      each: true,
+      message: '机器人ID为数组类型，且每项必须为数字',
+    },
+  )
+  @IsOptional()
+  robotIds?: number[];
+
   // 用于 save 时赋值, 不用做参数校验
   category?: Category;
   tags?: Tag[];
+  robots?: Robot[];
 }

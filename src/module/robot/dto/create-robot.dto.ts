@@ -13,6 +13,6 @@ export class CreateRobotDto {
   type: number;
 
   @IsString()
-  @IsNotEmpty({ message: 'Webhooks 名称不能为空' })
-  webhooks: string;
+  @IsNotEmpty({ message: 'Webhook不能为空' })
+  webhook: string;
 }
