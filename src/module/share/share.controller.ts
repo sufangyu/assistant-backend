@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { ShareService } from './share.service';
 import { CreateShareDto } from './dto/create-share.dto';
-import { QueryGroupShareDto } from './dto/query-share.dto';
+import { QueryGroupShareDto, QueryShareDto } from './dto/query-share.dto';
 import { UpdateShareDto } from './dto/update-share.dto';
 
 @Controller('share')
@@ -23,8 +23,8 @@ export class ShareController {
   }
 
   @Get()
-  findAll() {
-    return this.shareService.findAll();
+  findAll(@Query() query: QueryShareDto) {
+    return this.shareService.findAll(query);
   }
 
   @Get('query')
@@ -83,5 +83,10 @@ export class ShareController {
   @Get('website')
   websiteInfo(@Query('url') url: string) {
     return this.shareService.getWebsiteInfo(url);
+  }
+
+  @Get(':id')
+  detail(@Param('id') id: string) {
+    return this.shareService.findOne(+id);
   }
 }

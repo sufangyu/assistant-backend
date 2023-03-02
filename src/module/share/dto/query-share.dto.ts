@@ -1,5 +1,14 @@
 import { IsString, IsNotEmpty, IsOptional, IsIn } from 'class-validator';
 
+export class QueryShareDto {
+  page?: number;
+  size?: number;
+  start?: string;
+  end?: string;
+  categoryId?: number;
+  tagIds?: number[];
+}
+
 /**
  * 按条件分组查询数据
  *

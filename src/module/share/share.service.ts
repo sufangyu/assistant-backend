@@ -13,6 +13,8 @@ import { CategoryService } from '../category/category.service';
 import { TagService } from '../tag/tag.service';
 import { RobotService } from '../robot/robot.service';
 import { ROBOT_MESSAGE_TEMPLATE } from '@/enums';
+import { QueryShareDto } from './dto/query-share.dto';
+import { ListBase } from '@/type';
 
 @Injectable()
 export class ShareService extends BaseService {
@@ -83,24 +85,75 @@ export class ShareService extends BaseService {
     }
   }
 
-  findAll(): Promise<Share[]> {
+  async findAll(query: QueryShareDto): Promise<ListBase<Share>> {
+    // console.log('query: ', query);
     // 多对一联表查询: https://juejin.cn/post/7026575644150464548
     // 多对多联表查询：https://cloud.tencent.com/developer/article/1962428
-    const queryBuilder = this.shareRepository.createQueryBuilder('share');
-
-    queryBuilder
-      .leftJoinAndSelect('share.category', 'category')
+    const qb = this.shareRepository.createQueryBuilder('share');
+    qb.leftJoinAndSelect('share.category', 'category')
       .leftJoinAndSelect('share.tags', 'tags')
-      .select(['share.id', 'share.url', 'share.title'])
+      .leftJoinAndSelect('share.robots', 'robots')
+      .select([
+        'share.id',
+        'share.url',
+        'share.title',
+        'share.description',
+        'share.createdAt',
+      ])
       .addSelect(['category.id', 'category.name'])
       .addSelect(['tags.id', 'tags.name'])
-      .where({});
+      .addSelect(['robots.id', 'robots.name', 'robots.webhook']);
 
-    return queryBuilder.getMany();
+    // 分类
+    if (query.categoryId) {
+      // qb.andWhere('share.category = :id', { id: query.categoryId });
+      qb.andWhere('category.id = :id', { id: query.categoryId });
+    }
+
+    // 标签
+    if (query.tagIds) {
+      const tagIds = [...query.tagIds].map((it) => +it);
+      qb.andWhere('tags.id IN(:...ids)', { ids: tagIds });
+    }
+
+    // 时间查询
+    if (query.start && query.end) {
+      qb.andWhere('share.created_at BETWEEN :start AND :end', {
+        start: query.start ?? '',
+        end: query.end ?? '',
+      });
+    }
+
+    // 分页
+    qb.skip(query.size * (query.page - 1)).take(query.size);
+
+    const [list, total] = await qb.getManyAndCount();
+    return {
+      total,
+      list,
+      page: query.page,
+      size: query.size,
+    };
   }
 
   findOne(id: number) {
-    return this.shareRepository.findOneBy({ id });
+    const qb = this.shareRepository.createQueryBuilder('share');
+    qb.leftJoinAndSelect('share.category', 'category')
+      .leftJoinAndSelect('share.tags', 'tags')
+      .leftJoinAndSelect('share.robots', 'robots')
+      .select([
+        'share.id',
+        'share.url',
+        'share.title',
+        'share.description',
+        'share.createdAt',
+      ])
+      .addSelect(['category.id', 'category.name'])
+      .addSelect(['tags.id', 'tags.name'])
+      .addSelect(['robots.id', 'robots.name', 'robots.type', 'robots.webhook'])
+      .where({ id });
+
+    return qb.getOne();
   }
 
   async update(id: number, updateShareDto: UpdateShareDto) {
@@ -122,13 +175,14 @@ export class ShareService extends BaseService {
       // 同时赋值给 ShareDto 的 tags 参数, 用于给 share_tag_id 表添加数据
       const tags = await this.tagService.findMore(updateShareDto.tagIds);
 
-      console.log('update category, tags: ', category, tags);
+      const robots = await this.robotService.findMore(updateShareDto.robotIds);
 
       const { title, description } = updateShareDto;
       result.title = title;
       result.description = description;
       result.category = category;
       result.tags = tags;
+      result.robots = robots;
 
       return result.save();
     } catch (err) {

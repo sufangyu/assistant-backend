@@ -68,7 +68,7 @@ export class RobotService extends BaseService {
     template: ROBOT_MESSAGE_TEMPLATE,
     data: Partial<Share>[],
   ) {
-    console.log(robots, template, data);
+    // console.log(robots, template, data);
     const config = getRobotMessageConfig(template, data);
 
     for (let i = 0; i < robots.length; i++) {
