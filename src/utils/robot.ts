@@ -1,20 +1,20 @@
-import { ROBOT_MESSAGE_TEMPLATE } from '@/enums';
+import { RobotMessageTemplateEnum } from '@/enum';
 import { Share } from '@/module/share/entities/share.entity';
 
 /**
  * 获取机器人信息配置
  *
  * @export
- * @param {ROBOT_MESSAGE_TEMPLATE} template
+ * @param {RobotMessageTemplateEnum} template
  * @param {Partial<Share>[]} share
  * @return {*}
  */
 export function getRobotMessageConfig(
-  template: ROBOT_MESSAGE_TEMPLATE,
+  template: RobotMessageTemplateEnum,
   share: Partial<Share>[],
 ) {
   const CONFIG_MAP = {
-    [ROBOT_MESSAGE_TEMPLATE.EACH]: () => robotMessageConfigEach(share),
+    [RobotMessageTemplateEnum.EACH]: () => robotMessageConfigEach(share),
   };
 
   return CONFIG_MAP[template] && CONFIG_MAP[template]();

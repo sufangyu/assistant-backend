@@ -9,13 +9,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Share } from '@/module/share/entities/share.entity';
-
-/** 机器人类型（1: 飞书; 2: 钉钉; 3: 企微） */
-export enum RobotType {
-  FEI_SHU = 1,
-  DING_DING = 2,
-  QI_WEI = 3,
-}
+import { RobotTypeEnum, StatusEnum, StatusType } from '@/enum';
 
 @Entity()
 export class Robot extends BaseEntity {
@@ -39,11 +33,11 @@ export class Robot extends BaseEntity {
     type: 'enum',
     nullable: false,
     name: 'type',
-    enum: RobotType,
+    enum: RobotTypeEnum,
     comment: '机器人类型（1: 飞书; 2: 钉钉; 3: 企微）',
-    // default: RobotType.FEI_SHU,
+    // default: RobotTypeEnum.FEI_SHU,
   })
-  type: number;
+  type: RobotTypeEnum;
 
   @Column({
     type: 'varchar',
@@ -53,6 +47,16 @@ export class Robot extends BaseEntity {
     comment: '机器人 Webhook',
   })
   webhook: string;
+
+  @Column({
+    type: 'enum',
+    nullable: false,
+    name: 'status',
+    enum: StatusEnum,
+    comment: '状态（0: 禁用; 1: 启用;）',
+    default: StatusEnum.NORMAL,
+  })
+  status: StatusEnum;
 
   @ManyToMany(() => Share, (share) => share.robots)
   public shares: Share[];

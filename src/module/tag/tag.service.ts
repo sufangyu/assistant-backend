@@ -5,6 +5,7 @@ import { BaseService } from '@/common/service/base';
 import { Tag } from './entities/tag.entity';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
+import { QueryTag } from './dto/query-tag.dto';
 
 @Injectable()
 export class TagService extends BaseService {
@@ -21,6 +22,42 @@ export class TagService extends BaseService {
 
   findAll() {
     return this.tagRepository.find();
+  }
+
+  /**
+   * 列表分页查询
+   *
+   * @param {QueryTag} query
+   * @return {*}
+   * @memberof TagService
+   */
+  async findListWithQuery(query: QueryTag) {
+    const qb = this.tagRepository.createQueryBuilder('tag');
+
+    // 名称模糊查询
+    if (query.name) {
+      qb.andWhere('tag.name like :name', { name: `%${query.name}%` });
+    }
+
+    // 时间查询
+    if (query.start && query.end) {
+      qb.andWhere('tag.created_at BETWEEN :start AND :end', {
+        start: query.start ?? '',
+        end: query.end ?? '',
+      });
+    }
+
+    // 分页. 一页最多查 100 条数据; 默认查10条
+    const size = query.size ? Math.min(query.size, 100) : 10;
+    qb.skip(size * (query.page - 1)).take(size);
+
+    const [list, total] = await qb.getManyAndCount();
+    return {
+      total,
+      list,
+      page: query.page,
+      size: size,
+    };
   }
 
   findOne(id: number) {

@@ -24,11 +24,11 @@ export class ShareController {
 
   @Get()
   findAll(@Query() query: QueryShareDto) {
-    return this.shareService.findAll(query);
+    return this.shareService.findListWithQuery(query);
   }
 
   @Get('query')
-  findQuery(@Query() query) {
+  findWithQuery(@Query() query: QueryShareDto) {
     return this.shareService.findByQuery(query);
   }
 

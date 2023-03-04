@@ -1,10 +1,7 @@
 import { IsString, IsNotEmpty, IsOptional, IsIn } from 'class-validator';
+import { BaseQuery } from '@/common/dto/base';
 
-export class QueryShareDto {
-  page?: number;
-  size?: number;
-  start?: string;
-  end?: string;
+export class QueryShareDto extends BaseQuery {
   categoryId?: number;
   tagIds?: number[];
 }

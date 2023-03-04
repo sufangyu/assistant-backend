@@ -1,5 +1,5 @@
 import { IsString, IsNotEmpty, IsEnum } from 'class-validator';
-import { RobotType } from '../entities/robot.entity';
+import { RobotTypeEnum } from '@/enum';
 
 export class CreateRobotDto {
   @IsString()
@@ -8,7 +8,7 @@ export class CreateRobotDto {
 
   /** 机器人类型（1: 飞书; 2: 钉钉; 3: 企微） */
   // @IsEnum([1, 2, 3])
-  @IsEnum(RobotType)
+  @IsEnum(RobotTypeEnum)
   @IsNotEmpty({ message: '机器人类型不能为空' })
   type: number;
 

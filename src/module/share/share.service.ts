@@ -12,7 +12,7 @@ import { UpdateShareDto } from './dto/update-share.dto';
 import { CategoryService } from '../category/category.service';
 import { TagService } from '../tag/tag.service';
 import { RobotService } from '../robot/robot.service';
-import { ROBOT_MESSAGE_TEMPLATE } from '@/enums';
+import { RobotMessageTemplateEnum } from '@/enum';
 import { QueryShareDto } from './dto/query-share.dto';
 import { ListBase } from '@/type';
 
@@ -73,7 +73,7 @@ export class ShareService extends BaseService {
       // 机器人发送
       this.robotService.sendMessageForShare(
         createShareDto.robots,
-        ROBOT_MESSAGE_TEMPLATE.EACH,
+        RobotMessageTemplateEnum.EACH,
         [result],
       );
 
@@ -85,7 +85,7 @@ export class ShareService extends BaseService {
     }
   }
 
-  async findAll(query: QueryShareDto): Promise<ListBase<Share>> {
+  async findListWithQuery(query: QueryShareDto): Promise<ListBase<Share>> {
     // console.log('query: ', query);
     // 多对一联表查询: https://juejin.cn/post/7026575644150464548
     // 多对多联表查询：https://cloud.tencent.com/developer/article/1962428
@@ -124,15 +124,16 @@ export class ShareService extends BaseService {
       });
     }
 
-    // 分页
-    qb.skip(query.size * (query.page - 1)).take(query.size);
+    // 分页. 一页最多查 100 条数据; 默认查10条
+    const size = query.size ? Math.min(query.size, 100) : 10;
+    qb.skip(size * (query.page - 1)).take(size);
 
     const [list, total] = await qb.getManyAndCount();
     return {
       total,
       list,
       page: query.page,
-      size: query.size,
+      size: size,
     };
   }
 

@@ -6,10 +6,12 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { RobotService } from './robot.service';
 import { CreateRobotDto } from './dto/create-robot.dto';
-import { UpdateRobotDto } from './dto/update-robot.dto';
+import { UpdateRobotDto, UpdateRobotStatusDto } from './dto/update-robot.dto';
+import { QueryRobot } from './dto/query-robot.dto';
 
 @Controller('robot')
 export class RobotController {
@@ -25,6 +27,11 @@ export class RobotController {
     return this.robotService.findAll();
   }
 
+  @Get('list')
+  findWithQuery(@Query() query: QueryRobot) {
+    return this.robotService.findListWithQuery(query);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.robotService.findOne(+id);
@@ -33,6 +40,14 @@ export class RobotController {
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateRobotDto: UpdateRobotDto) {
     return this.robotService.update(+id, updateRobotDto);
+  }
+
+  @Patch('/status/:id')
+  updateStatus(
+    @Param('id') id: string,
+    @Body() updateRobotStatusDto: UpdateRobotStatusDto,
+  ) {
+    return this.robotService.updateStatus(+id, updateRobotStatusDto);
   }
 
   @Delete(':id')
