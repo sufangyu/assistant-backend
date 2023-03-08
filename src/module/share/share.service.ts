@@ -5,16 +5,22 @@ import { HttpService } from '@nestjs/axios';
 import { AxiosResponse } from 'axios';
 import { load } from 'cheerio';
 import { firstValueFrom } from 'rxjs';
+import * as dayjs from 'dayjs';
 import { BaseService } from '@/common/service/base';
+import { RobotMessageTemplateEnum } from '@/enum';
+import { ListBase } from '@/type';
 import { Share } from './entities/share.entity';
 import { CreateShareDto } from './dto/create-share.dto';
 import { UpdateShareDto } from './dto/update-share.dto';
 import { CategoryService } from '../category/category.service';
 import { TagService } from '../tag/tag.service';
 import { RobotService } from '../robot/robot.service';
-import { RobotMessageTemplateEnum } from '@/enum';
-import { QueryShareDto } from './dto/query-share.dto';
-import { ListBase } from '@/type';
+import {
+  QueryShareDto,
+  QueryTrendShareDto,
+  TrendQueryDto,
+} from './dto/query-share.dto';
+import { getDatesByRange } from '@/utils';
 
 @Injectable()
 export class ShareService extends BaseService {
@@ -278,18 +284,13 @@ export class ShareService extends BaseService {
       FROM
           share
       WHERE
-          is_del != 1
-          AND
           DATE_FORMAT(created_at,'%Y') = ${year}
       GROUP BY
           value
       ORDER BY
           value asc;
     `);
-    console.log('====================================');
-    console.log(queryRes);
-    console.log('====================================');
-
+    console.log('queryRes: ', queryRes);
     // [
     //   { value: 1, total: '8' },
     //   { value: 2, total: '2' },
@@ -310,6 +311,243 @@ export class ShareService extends BaseService {
     });
 
     return total;
+  }
+
+  /**
+   * 统计近2年/2个月数据
+   *
+   * @memberof ShareService
+   */
+  async totalRecent(type: 'year' | 'month') {
+    // const now = '2022-1-06';
+    const formatStr = type === 'year' ? 'YYYY' : 'YYYY-MM';
+    const formatStrSql = type === 'year' ? '%Y' : '%Y-%m';
+    const current = dayjs().format(formatStr);
+    const prev = dayjs().subtract(1, type).format(formatStr);
+    const recentTotal = {
+      [current]: 0,
+      [prev]: 0,
+    };
+    const qb = this.shareRepository.createQueryBuilder('share');
+    qb.select([
+      `DATE_FORMAT(created_at, '${formatStrSql}') as type`,
+      'COUNT(*) as total',
+    ])
+      .where(
+        `DATE_FORMAT(created_at, '${formatStrSql}') BETWEEN :start AND :end`,
+        {
+          start: prev,
+          end: current,
+        },
+      )
+      .groupBy(`type`);
+    const rawRes: { type: string; total: number }[] = await qb.getRawMany();
+    // console.log(qb.getSql());
+    // console.log(rawRes);
+
+    (rawRes ?? []).forEach((it) => {
+      recentTotal[it.type] = Number(it.total) ?? 0;
+    });
+    // console.log('recentTotal:', recentTotal);
+
+    return {
+      prev: recentTotal[prev],
+      current: recentTotal[current],
+      type,
+    };
+  }
+
+  /**
+   * 数据趋势（7day、14day、30day）
+   *
+   * 原生SQL实现: https://cloud.tencent.com/developer/article/1911200
+   *
+   * @param {TrendQueryDto} query
+   * @return {*}
+   * @memberof ShareService
+   */
+  async trend(query: TrendQueryDto) {
+    const formatStr = 'YYYY-MM-DD';
+    const OFFSET_MAP = {
+      '7day': 7,
+      '14day': 14,
+      '30day': 30,
+    };
+    const start = dayjs()
+      .subtract(OFFSET_MAP[query.type], 'day')
+      .format(formatStr);
+    const end = dayjs().subtract(1, 'day').format(formatStr);
+
+    // 生成指定的日期列表（数组 => 对象）
+    const datesRange = getDatesByRange(start, end);
+    const resultObj = Object.create(null);
+    datesRange.forEach((date) => (resultObj[date] = 0));
+
+    const qb = this.shareRepository.createQueryBuilder('share');
+    qb.select([
+      `DATE_FORMAT(created_at, '%Y-%m-%d') AS date`,
+      'COUNT(*) AS total',
+    ])
+      .where(`DATE_FORMAT(created_at, '%Y-%m-%d') BETWEEN :start AND :end`, {
+        start,
+        end,
+      })
+      .groupBy(`date`);
+
+    // 循环查询结果, 赋值有统计到的结果
+    const rawData = await qb.getRawMany<{ date: string; total: number }>();
+    rawData.forEach((it) => (resultObj[it.date] = Number(it.total)));
+    // console.log(resultObj);
+
+    // 转换格式返回
+    return Object.keys(resultObj).map((k) => ({
+      date: k,
+      total: resultObj[k],
+    }));
+  }
+
+  /**
+   * 趋势同比（季度/月度）
+   *
+   * @param {QueryTrendShareDto} query
+   * @return {*}
+   * @memberof ShareService
+   */
+  async trendYearOverYear(query: QueryTrendShareDto, year: string) {
+    const qb = this.shareRepository.createQueryBuilder('share');
+    qb.select([
+      'COUNT(share.id) AS total',
+      `${query.type}(share.created_at) as ${query.type}`,
+    ])
+      .andWhere('created_at BETWEEN :start AND :end', {
+        start: `${year}-01-01 00:00:00`,
+        end: `${year}-12-31 23:59:59`,
+      })
+      .groupBy(query.type)
+      .orderBy(query.type, 'ASC');
+
+    const rawResult = await qb.getRawMany();
+    // console.log(rawResult);
+
+    // 处理补全内容
+    const FULL_MAP = {
+      quarter: ['1', '2', '3', '4'],
+      month: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'],
+    };
+    const result = (FULL_MAP[query.type] ?? []).map((it) => {
+      let data = { [`${query.type}`]: Number(it), total: 0 };
+      const item = rawResult.find((t) => t[`${query.type}`] === Number(it));
+      if (item) {
+        data = {
+          [`${query.type}`]: Number(it),
+          total: Number(item.total),
+        };
+      }
+      return data;
+    });
+
+    return result;
+  }
+
+  /**
+   * 分类汇总
+   *
+   * @param {string} [year]
+   * @return {*}
+   * @memberof ShareService
+   */
+  async pipCategory(year?: string) {
+    const curYear = year ?? dayjs().format('YYYY');
+
+    // 原生 SQL 语句
+    // select count(s.created_at) as total, s.category_id, ifnull(c.name, '未知') as name
+    // from share s
+    //     left join category c on c.id = s.category_id
+    // where YEAR(s.created_at) = YEAR(curdate())
+    //   and s.deleted_at is null
+    // group by s.category_id
+    const qb = this.shareRepository.createQueryBuilder('share');
+    qb.leftJoinAndSelect('share.category', 'category')
+      .where(`YEAR(share.created_at) = :year`, { year: curYear })
+      .select([
+        'COUNT(share.created_at) as value',
+        `IFNULL(category.name, '未知') as name`,
+        'share.category_id',
+      ])
+      .groupBy('share.category');
+    // console.log(qb.getSql());
+
+    // const count = await qb.getCount();
+    const res = await qb.getRawMany();
+    return res;
+  }
+
+  /**
+   * 机器人汇总
+   *
+   * @param {string} [year]
+   * @return {*}
+   * @memberof ShareService
+   */
+  async pipRobot(year?: string) {
+    const curYear = year ?? dayjs().format('YYYY');
+
+    // 原生 SQL
+    // SELECT count(s.id) as value, ifnull(r.name, '未知') as name, sri.robot_id
+    // FROM share s
+    //     LEFT JOIN share_robot_id sri ON s.id = sri.share_id
+    //     LEFT JOIN robot r ON r.id = sri.robot_id
+    // WHERE YEAR(s.created_at) = YEAR(curdate()) AND s.deleted_at is null
+    // GROUP BY sri.robot_id
+    const qb = this.shareRepository.createQueryBuilder('share');
+    qb.leftJoinAndSelect('share_robot_id', 'sri', 'share.id = sri.share_id')
+      .leftJoinAndSelect('robot', 'robot', 'robot.id = sri.robot_id')
+      .where(`YEAR(share.created_at) = :year`, { year: curYear })
+      .select([
+        'COUNT(share.id) as value',
+        `IFNULL(robot.name, '未知') as name`,
+        'robot.id',
+      ])
+      .groupBy('sri.robot_id');
+    // console.log(qb.getSql());
+
+    const res = await qb.getRawMany();
+    // console.log(count, res);
+    return res;
+  }
+
+  /**
+   * 标签汇总
+   *
+   * @param {string} [year]
+   * @return {*}
+   * @memberof ShareService
+   */
+  async pipTag(year?: string) {
+    const curYear = year ?? dayjs().format('YYYY');
+
+    // 原生 SQL
+    // SELECT COUNT(s.id) as value, ifnull(t.name, '未知') as name, t.id
+    // FROM share s
+    //         LEFT JOIN share_tag_id sti on s.id = sti.share_id
+    //         LEFT JOIN tag t on t.id = sti.tag_id
+    // WHERE YEAR(s.created_at) = YEAR(curdate()) AND s.deleted_at is null
+    // GROUP BY t.id
+    const qb = this.shareRepository.createQueryBuilder('share');
+    qb.leftJoinAndSelect('share_tag_id', 'sti', 'share.id = sti.share_id')
+      .leftJoinAndSelect('tag', 'tag', 'tag.id = sti.tag_id')
+      .where(`YEAR(share.created_at) = :year`, { year: curYear })
+      .select([
+        'COUNT(share.id) as value',
+        `IFNULL(tag.name, '未知') as name`,
+        'tag.id',
+      ])
+      .groupBy('tag.id');
+    // console.log(qb.getSql());
+
+    const res = await qb.getRawMany();
+    // console.log(count, res);
+    return res;
   }
 
   /**

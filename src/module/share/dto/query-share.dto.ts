@@ -12,12 +12,24 @@ export class QueryShareDto extends BaseQuery {
  * @export
  * @class QueryGroupShareDto
  */
-export class QueryGroupShareDto {
+export class QueryTrendShareDto {
   @IsIn(['year', 'quarter', 'month'], {
     message: '类型值只能取其一：year, quarter, month',
   })
   @IsNotEmpty({ message: '类型不能为空' })
   type: 'year' | 'quarter' | 'month';
+
+  @IsString()
+  @IsOptional()
+  year?: string;
+}
+
+export class TrendQueryDto {
+  @IsIn(['7day', '14day', '30day'], {
+    message: '类型值只能取其一：7day, 14day, 30day',
+  })
+  @IsNotEmpty({ message: '类型不能为空' })
+  type: '7day' | '14day' | '30day';
 
   @IsString()
   @IsOptional()
