@@ -7,21 +7,38 @@ export class QueryShareDto extends BaseQuery {
 }
 
 /**
- * 按条件分组查询数据
+ * 按条件归档查询数据
  *
  * @export
- * @class QueryGroupShareDto
+ * @class QueryShareFiledDto
  */
-export class QueryTrendShareDto {
+export class QueryShareFiledDto {
+  @IsIn(['year', 'quarter', 'month'], {
+    message: '类型值只能取其一：year, quarter, month',
+  })
+  @IsNotEmpty({ message: '类型不能为空' })
+  type: 'quarter' | 'month';
+
+  @IsString()
+  @IsOptional()
+  year?: string;
+}
+
+/**
+ * 趋势同比（季度/月度）
+ *
+ * @export
+ * @class QueryShareFiledDto
+ */
+export class QueryShareTrendDto {
   @IsIn(['year', 'quarter', 'month'], {
     message: '类型值只能取其一：year, quarter, month',
   })
   @IsNotEmpty({ message: '类型不能为空' })
   type: 'year' | 'quarter' | 'month';
-
-  @IsString()
-  @IsOptional()
-  year?: string;
+  // @IsString()
+  // @IsOptional()
+  // year?: string;
 }
 
 export class TrendQueryDto {

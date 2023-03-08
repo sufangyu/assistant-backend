@@ -17,7 +17,8 @@ import { TagService } from '../tag/tag.service';
 import { RobotService } from '../robot/robot.service';
 import {
   QueryShareDto,
-  QueryTrendShareDto,
+  QueryShareFiledDto,
+  QueryShareTrendDto,
   TrendQueryDto,
 } from './dto/query-share.dto';
 import { getDatesByRange } from '@/utils';
@@ -212,36 +213,58 @@ export class ShareService extends BaseService {
   }
 
   /**
-   * 按条件查询分组
+   * 按条件归档查询
    *
-   * @param {('year' | 'quarter' | 'month')} type
+   * @param {QueryShareFiledDto} query
    * @return {*}
    * @memberof ShareService
    */
-  findAllGroup(year?: string): Promise<Share[]> {
-    const queryBuilder = this.shareRepository.createQueryBuilder();
+  async findAllFiled(query: QueryShareFiledDto) {
+    const curYear = dayjs().format('YYYY');
+    // console.log(curYear);
+    const { type, year = curYear } = query;
+    const qb = this.shareRepository.createQueryBuilder();
 
-    queryBuilder
-      .select([
-        'id',
-        'title',
-        'created_at as createdAt',
-        'YEAR(created_at) as year',
-        'QUARTER(created_at) as quarter',
-        'MONTH(created_at) as month',
-      ])
-      .where({});
-
-    // 查询指定年份的数据
-    if (year) {
-      queryBuilder.andWhere('created_at BETWEEN :start AND :end', {
+    qb.select([
+      'id',
+      'url',
+      'title',
+      'description',
+      `DATE_FORMAT(created_at,'%Y-%m-%d') AS createdAt`,
+      'YEAR(created_at) AS year',
+      'QUARTER(created_at) AS quarter',
+      'MONTH(created_at) AS month',
+    ])
+      .where('created_at BETWEEN :start AND :end', {
         start: `${year}-01-01 00:00:00`,
         end: `${year}-12-31 23:59:59`,
-      });
-    }
-    queryBuilder.orderBy('created_at', 'ASC');
+      })
+      .orderBy('created_at', 'ASC');
 
-    return queryBuilder.getRawMany();
+    const rawResult = await qb.getRawMany();
+    // console.log(rawResult);
+
+    const resultFiled = {};
+    (rawResult ?? []).forEach((it) => {
+      const key = it[type];
+      if (!resultFiled[key]) {
+        resultFiled[key] = {
+          type,
+          label: it[type],
+          list: [],
+        };
+      }
+
+      resultFiled[key].list.push({
+        id: it.id,
+        title: it.title,
+        url: it.url,
+        description: it.description,
+        createdAt: it.createdAt,
+      });
+    });
+
+    return Object.values(resultFiled);
   }
 
   async findByQuery(query) {
@@ -409,11 +432,11 @@ export class ShareService extends BaseService {
   /**
    * 趋势同比（季度/月度）
    *
-   * @param {QueryTrendShareDto} query
+   * @param {QueryShareTrendDto} query
    * @return {*}
    * @memberof ShareService
    */
-  async trendYearOverYear(query: QueryTrendShareDto, year: string) {
+  async trendYearOverYear(query: QueryShareTrendDto, year: string) {
     const qb = this.shareRepository.createQueryBuilder('share');
     qb.select([
       'COUNT(share.id) AS total',

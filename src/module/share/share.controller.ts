@@ -14,7 +14,8 @@ import { ShareService } from './share.service';
 import { CreateShareDto } from './dto/create-share.dto';
 import {
   QueryShareDto,
-  QueryTrendShareDto,
+  QueryShareFiledDto,
+  QueryShareTrendDto,
   TrendQueryDto,
 } from './dto/query-share.dto';
 import { UpdateShareDto } from './dto/update-share.dto';
@@ -39,43 +40,15 @@ export class ShareController {
   }
 
   /**
-   * 按条件查询分组
+   * 按条件归档查询
    *
-   * - 按年份查询时, 不能传当前年份(year)
-   * - 按季度/月份查询时，可不传今年, 查询今年的数据
-   *
-   * @param {({ type: 'year' | 'quarter' | 'month' })} query
+   * @param {QueryShareFiledDto} query
    * @return {*}
    * @memberof ShareController
    */
-  @Get('group')
-  async findGroup(@Query() query: QueryTrendShareDto) {
-    const { type, year } = query;
-    const curYear = new Date().getFullYear().toString();
-    const qYear = ['quarter', 'month'].includes(type) ? year || curYear : null;
-    const rawRes = await this.shareService.findAllGroup(qYear);
-
-    // 处理数据
-    const resGroup = {};
-    rawRes.forEach((it) => {
-      const key = it[type];
-      console.log(key);
-
-      if (!resGroup[key]) {
-        resGroup[key] = {
-          [type]: it[type],
-          list: [],
-        };
-      }
-
-      resGroup[key].list.push({
-        id: it.id,
-        title: it.title,
-        createdAt: it.createdAt,
-      });
-    });
-
-    return Object.values(resGroup);
+  @Get('filed')
+  async findAllFiled(@Query() query: QueryShareFiledDto) {
+    return this.shareService.findAllFiled(query);
   }
 
   /**
@@ -84,7 +57,7 @@ export class ShareController {
    * @memberof ShareController
    */
   @Get('year-over-year')
-  async findTrendYearOverYear(@Query() query: QueryTrendShareDto) {
+  async findTrendYearOverYear(@Query() query: QueryShareTrendDto) {
     const current = await this.shareService.trendYearOverYear(query, '2023');
     const prev = await this.shareService.trendYearOverYear(query, '2022');
 
