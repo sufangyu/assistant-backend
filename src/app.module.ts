@@ -10,6 +10,7 @@ import { ShareModule } from './module/share/share.module';
 import { CategoryModule } from './module/category/category.module';
 import { TagModule } from './module/tag/tag.module';
 import { RobotModule } from './module/robot/robot.module';
+import { PushRecordModule } from './module/push-record/push-record.module';
 
 // console.log('config', config.db);
 console.log('process.env.NODE_ENV:', process.env.NODE_ENV);
@@ -37,6 +38,7 @@ console.log('process.env.NODE_ENV:', process.env.NODE_ENV);
     CategoryModule,
     TagModule,
     RobotModule,
+    PushRecordModule,
   ],
   controllers: [AppController],
   providers: [AppService, TasksService],

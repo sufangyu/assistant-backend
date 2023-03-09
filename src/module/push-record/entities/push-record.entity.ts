@@ -1,22 +1,20 @@
 import {
   BaseEntity,
+  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
+  UpdateDateColumn,
   DeleteDateColumn,
   Entity,
-  ManyToMany,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
 } from 'typeorm';
-import { Share } from '@/module/share/entities/share.entity';
-import { RobotTypeEnum, StatusEnum } from '@/enum';
+import { PushResultEnum } from '@/enum';
 
 @Entity()
-export class Robot extends BaseEntity {
+export class PushRecord extends BaseEntity {
   @PrimaryGeneratedColumn({
     type: 'int',
     name: 'id',
-    comment: '机器人ID',
+    comment: '记录ID',
   })
   id: number;
 
@@ -24,42 +22,27 @@ export class Robot extends BaseEntity {
     type: 'varchar',
     nullable: false,
     length: 50,
-    name: 'name',
-    comment: '机器人名称',
+    name: 'module',
+    comment: '功能模块',
   })
-  name: string;
-
-  @Column({
-    type: 'enum',
-    nullable: false,
-    name: 'type',
-    enum: RobotTypeEnum,
-    comment: '机器人类型（1: 飞书; 2: 钉钉; 3: 企微）',
-    // default: RobotTypeEnum.FEI_SHU,
-  })
-  type: RobotTypeEnum;
+  module: string;
 
   @Column({
     type: 'varchar',
-    nullable: false,
-    length: 250,
-    name: 'webhook',
-    comment: '机器人 Webhook',
+    nullable: true,
+    length: 500,
+    name: 'variable',
+    comment: '推送变量、参数集合（JSON 字符串格式）',
   })
-  webhook: string;
+  variable: string;
 
   @Column({
-    type: 'enum',
+    type: 'int',
     nullable: false,
-    name: 'status',
-    enum: StatusEnum,
-    comment: '状态（0: 禁用; 1: 启用;）',
-    default: StatusEnum.NORMAL,
+    name: 'result',
+    comment: '推送结果 (0:失败; 1:成功)',
   })
-  status: StatusEnum;
-
-  @ManyToMany(() => Share, (share) => share.robots)
-  public shares: Share[];
+  result: PushResultEnum;
 
   @CreateDateColumn({
     type: 'timestamp',

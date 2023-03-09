@@ -1,6 +1,12 @@
 import { BaseQuery } from '@/common/dto/base';
 import { RobotType, StatusType } from '@/enum';
-import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsIn,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsNumber,
+} from 'class-validator';
 
 export class QueryRobot extends BaseQuery {
   name?: string;
@@ -9,6 +15,10 @@ export class QueryRobot extends BaseQuery {
 }
 
 export class ReportTypeRobotDto {
+  @IsNumber()
+  @IsOptional()
+  id?: number;
+
   @IsIn(['quarter', 'month'], {
     message: '类型值只能取其一：quarter, month',
   })
@@ -17,5 +27,9 @@ export class ReportTypeRobotDto {
 
   @IsString()
   @IsOptional()
-  year?: 'string';
+  year?: number;
+
+  @IsString()
+  @IsOptional()
+  value?: number;
 }

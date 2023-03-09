@@ -607,17 +607,13 @@ export class ShareService extends BaseService {
   }
 
   async findListForReport(query: ReportTypeRobotDto): Promise<Share[]> {
-    const year = query.year ?? dayjs().format('YYYY');
-    const type = query.type;
-    const mathVal =
-      type === 'quarter' ? dayjs().quarter() : dayjs().month() + 1;
-
+    const { type, year, value } = query;
     const qb = this.shareRepository.createQueryBuilder('share');
     qb.select().where(
       `DATE_FORMAT(created_at, '%Y') = :year AND ${type}(created_at) = :math`,
       {
         year,
-        math: mathVal,
+        math: value,
       },
     );
 
