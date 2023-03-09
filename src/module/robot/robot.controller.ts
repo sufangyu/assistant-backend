@@ -11,7 +11,7 @@ import {
 import { RobotService } from './robot.service';
 import { CreateRobotDto } from './dto/create-robot.dto';
 import { UpdateRobotDto, UpdateRobotStatusDto } from './dto/update-robot.dto';
-import { QueryRobot } from './dto/query-robot.dto';
+import { QueryRobot, ReportTypeRobotDto } from './dto/query-robot.dto';
 
 @Controller('robot')
 export class RobotController {
@@ -77,5 +77,10 @@ export class RobotController {
     const template = 1;
     const share = { url: '标题', title: 'xxx', description: 'yyy' };
     return this.robotService.sendMessageForShare(robots, template, [share]);
+  }
+
+  @Post('month-quarter')
+  sendMessageMonthQuarter(@Body() query: ReportTypeRobotDto) {
+    return this.robotService.sendMessageReportForShare(query);
   }
 }

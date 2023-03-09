@@ -1,22 +1,29 @@
-import { StatusEnum } from './../../enum/status.enum';
 import { In, Repository, Like } from 'typeorm';
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { HttpService } from '@nestjs/axios';
+import * as dayjs from 'dayjs';
+import * as quarterOfYear from 'dayjs/plugin/quarterOfYear';
 import { BaseService } from '@/common/service/base';
-import { RobotMessageTemplateEnum } from '@/enum';
+import { RobotMessageTemplateEnum, StatusEnum } from '@/enum';
 import { getRobotMessageConfig } from '@/utils';
 import { CreateRobotDto } from './dto/create-robot.dto';
 import { UpdateRobotDto, UpdateRobotStatusDto } from './dto/update-robot.dto';
+import { QueryRobot, ReportTypeRobotDto } from './dto/query-robot.dto';
 import { Robot } from './entities/robot.entity';
 import { Share } from '../share/entities/share.entity';
-import { QueryRobot } from './dto/query-robot.dto';
+import { ShareService } from '../share/share.service';
+
+// 增强 dayjs
+dayjs.extend(quarterOfYear);
 
 @Injectable()
 export class RobotService extends BaseService {
   constructor(
     @InjectRepository(Robot)
     private readonly robotRepository: Repository<Robot>,
+    @Inject(forwardRef(() => ShareService))
+    private readonly shareService: ShareService,
     private readonly httpService: HttpService,
   ) {
     super();
@@ -123,6 +130,7 @@ export class RobotService extends BaseService {
    *
    * @param {Partial<Robot>[]} robots
    * @param {RobotMessageTemplateEnum} template
+   * @param {Partial<Share>[]} data
    * @memberof RobotService
    */
   async sendMessageForShare(
@@ -137,6 +145,39 @@ export class RobotService extends BaseService {
       const robot = robots[i];
       const res = await this.httpService.axiosRef.post(robot.webhook, config);
       console.log(robot.webhook, template, res.data);
+    }
+  }
+
+  /**
+   *发送报告 (月份、季度)
+   *
+   * @param {ReportTypeRobotDto} query
+   * @memberof RobotService
+   */
+  async sendMessageReportForShare(query: ReportTypeRobotDto) {
+    const templates = {
+      month: RobotMessageTemplateEnum.MONTH,
+      quarter: RobotMessageTemplateEnum.QUARTER,
+    };
+    const isMonthType = query.type === 'month';
+    const idx = isMonthType ? dayjs().month() + 1 : dayjs().quarter();
+    const title = isMonthType
+      ? `【好文报告】${idx}月份推荐`
+      : `【好文报告】第${idx}季度推荐`;
+
+    // 1. 获取数据列表
+    const data = await this.shareService.findListForReport(query);
+    // 2. 获取配置
+    const config = getRobotMessageConfig(templates[query.type], data, title);
+    // 3. 获取要发送机器人集合
+    const robots = await this.findAll();
+    // 4. 循环机器人集合发送信息
+    for (let i = 0; i < robots.length; i++) {
+      const robot = robots[i];
+      const res = await this.httpService.axiosRef.get(robot.webhook, config);
+      console.log(res.data);
+
+      // TODO: 推送结果记录入库, 以便后续自动入库（）
     }
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { HttpService } from '@nestjs/axios';
@@ -6,6 +6,7 @@ import { AxiosResponse } from 'axios';
 import { load } from 'cheerio';
 import { firstValueFrom } from 'rxjs';
 import * as dayjs from 'dayjs';
+import * as quarterOfYear from 'dayjs/plugin/quarterOfYear';
 import { BaseService } from '@/common/service/base';
 import { RobotMessageTemplateEnum } from '@/enum';
 import { ListBase } from '@/type';
@@ -22,6 +23,10 @@ import {
   TrendQueryDto,
 } from './dto/query-share.dto';
 import { getDatesByRange } from '@/utils';
+import { ReportTypeRobotDto } from '../robot/dto/query-robot.dto';
+
+// 增强 dayjs
+dayjs.extend(quarterOfYear);
 
 @Injectable()
 export class ShareService extends BaseService {
@@ -30,6 +35,7 @@ export class ShareService extends BaseService {
     private readonly shareRepository: Repository<Share>,
     private readonly categoryService: CategoryService,
     private readonly tagService: TagService,
+    @Inject(forwardRef(() => RobotService))
     private readonly robotService: RobotService,
     private readonly dataSource: DataSource,
     private readonly httpService: HttpService,
@@ -71,8 +77,7 @@ export class ShareService extends BaseService {
           createShareDto.robotIds,
         );
       }
-
-      console.log(createShareDto);
+      // console.log(createShareDto);
 
       const result = await this.shareRepository.save(createShareDto);
       await queryRunner.commitTransaction();
@@ -599,5 +604,23 @@ export class ShareService extends BaseService {
     }
 
     return { title, description };
+  }
+
+  async findListForReport(query: ReportTypeRobotDto): Promise<Share[]> {
+    const year = query.year ?? dayjs().format('YYYY');
+    const type = query.type;
+    const mathVal =
+      type === 'quarter' ? dayjs().quarter() : dayjs().month() + 1;
+
+    const qb = this.shareRepository.createQueryBuilder('share');
+    qb.select().where(
+      `DATE_FORMAT(created_at, '%Y') = :year AND ${type}(created_at) = :math`,
+      {
+        year,
+        math: mathVal,
+      },
+    );
+
+    return qb.getMany();
   }
 }

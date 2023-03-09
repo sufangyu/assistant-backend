@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HttpModule } from '@nestjs/axios';
 import { ShareService } from './share.service';
@@ -13,10 +13,11 @@ import { RobotModule } from '../robot/robot.module';
     TypeOrmModule.forFeature([Share]),
     CategoryModule,
     TagModule,
-    RobotModule,
+    forwardRef(() => RobotModule),
     HttpModule,
   ],
   controllers: [ShareController],
   providers: [ShareService],
+  exports: [ShareService],
 })
 export class ShareModule {}
