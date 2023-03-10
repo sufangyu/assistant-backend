@@ -10,6 +10,7 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { ShareService } from './share.service';
 import { CreateShareDto } from './dto/create-share.dto';
 import {
@@ -20,6 +21,7 @@ import {
 } from './dto/query-share.dto';
 import { UpdateShareDto } from './dto/update-share.dto';
 
+@ApiTags('分享内容')
 @Controller('share')
 export class ShareController {
   constructor(private readonly shareService: ShareService) {}

@@ -8,11 +8,13 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { PushRecordService } from './push-record.service';
 import { CreatePushRecordDto } from './dto/create-push-record.dto';
 import { UpdatePushRecordDto } from './dto/update-push-record.dto';
 import { PushRecordQueryRobotDto } from './dto/query-push-record.dto';
 
+@ApiTags('推送记录')
 @Controller('push-record')
 export class PushRecordController {
   constructor(private readonly pushRecordService: PushRecordService) {}

@@ -8,11 +8,13 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { QueryCategory } from './dto/query-category.dto';
 
+@ApiTags('分类')
 @Controller('category')
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}

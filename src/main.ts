@@ -3,9 +3,12 @@ import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './filter/any-exception.filter';
 import { AllResponseInterceptor } from './interceptor/all-response.interceptor';
 import { ValidationPipe } from './pipe/validate.pipe';
+import { swaggerSetup } from './plugins/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  swaggerSetup(app);
 
   // 跨域设置
   app.enableCors({

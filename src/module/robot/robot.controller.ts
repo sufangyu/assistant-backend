@@ -8,11 +8,13 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { RobotService } from './robot.service';
 import { CreateRobotDto } from './dto/create-robot.dto';
 import { UpdateRobotDto, UpdateRobotStatusDto } from './dto/update-robot.dto';
 import { QueryRobot, ReportTypeRobotDto } from './dto/query-robot.dto';
 
+@ApiTags('机器人')
 @Controller('robot')
 export class RobotController {
   constructor(private readonly robotService: RobotService) {}
