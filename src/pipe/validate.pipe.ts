@@ -3,7 +3,6 @@ import {
   PipeTransform,
   Injectable,
   ArgumentMetadata,
-  BadRequestException,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
@@ -38,7 +37,6 @@ export class ValidationPipe implements PipeTransform<any> {
     } while (true);
 
     if (errorList.length > 0) {
-      // throw new BadRequestException('校验失败，原因: ');
       throw new HttpException(
         '参数错误: ' + errorList[0],
         HttpStatus.INTERNAL_SERVER_ERROR,

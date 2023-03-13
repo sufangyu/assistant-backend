@@ -7,11 +7,16 @@ import { UserModule } from '../user/user.module';
 
 @Module({
   imports: [
-    UserModule,
-    JwtModule.register({
-      secret: 'dasdjanksjdasd', // 密钥
-      signOptions: { expiresIn: '7d' }, // token 过期时效
+    // ConfigModule,
+    JwtModule.registerAsync({
+      useFactory: async () => ({
+        secret: process.env.JWT_SECRET_KEY,
+        signOptions: {
+          expiresIn: process.env.JWT_SECRET_TIME,
+        },
+      }),
     }),
+    UserModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],

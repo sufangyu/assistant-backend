@@ -18,7 +18,7 @@ export class AllResponseInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
       map((data: any) => {
-        const http = context.switchToHttp();
+        // const http = context.switchToHttp();
         // const req = http.getRequest();
         // const res = http.getResponse();
 

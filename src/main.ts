@@ -23,7 +23,7 @@ async function bootstrap() {
   app.useGlobalInterceptors(new AllResponseInterceptor());
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  await app.listen(3000);
+  await app.listen(process.env.APP_PORT ?? 3000);
 }
 
 bootstrap();

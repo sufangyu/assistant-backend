@@ -23,6 +23,7 @@ console.log('process.env.NODE_ENV:', process.env.NODE_ENV);
   imports: [
     ConfigModule.forRoot({
       envFilePath: `.env.${process.env.NODE_ENV}`,
+      isGlobal: true,
     }),
     TypeOrmModule.forRoot({
       type: 'mysql',
@@ -47,7 +48,7 @@ console.log('process.env.NODE_ENV:', process.env.NODE_ENV);
   ],
   controllers: [AppController],
   providers: [
-    // { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
     AppService,
     TasksService,
   ],
