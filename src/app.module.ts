@@ -1,6 +1,7 @@
 import { Dependencies, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { DataSource } from 'typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
@@ -11,8 +12,10 @@ import { CategoryModule } from './module/category/category.module';
 import { TagModule } from './module/tag/tag.module';
 import { RobotModule } from './module/robot/robot.module';
 import { PushRecordModule } from './module/push-record/push-record.module';
+import { UserModule } from './module/user/user.module';
+import { JwtAuthGuard } from './guard/auth.guard';
+import { AuthModule } from './module/auth/auth.module';
 
-// console.log('config', config.db);
 console.log('process.env.NODE_ENV:', process.env.NODE_ENV);
 
 @Dependencies(DataSource)
@@ -39,9 +42,15 @@ console.log('process.env.NODE_ENV:', process.env.NODE_ENV);
     TagModule,
     RobotModule,
     PushRecordModule,
+    UserModule,
+    AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService, TasksService],
+  providers: [
+    // { provide: APP_GUARD, useClass: JwtAuthGuard },
+    AppService,
+    TasksService,
+  ],
 })
 export class AppModule {
   dataSource: DataSource;

@@ -13,6 +13,7 @@ import { TagService } from './tag.service';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
 import { QueryTag } from './dto/query-tag.dto';
+import { NoAuth } from '@/decorator/no-auth.decorator';
 
 @ApiTags('标签')
 @Controller('tag')
@@ -24,6 +25,7 @@ export class TagController {
     return this.tagService.create(createTagDto);
   }
 
+  @NoAuth()
   @Get()
   findAll() {
     return this.tagService.findAll();

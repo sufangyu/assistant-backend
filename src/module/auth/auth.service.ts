@@ -1,0 +1,131 @@
+import { BaseService } from '@/common/service/base';
+import { encryptPassword, makeSalt } from '@/utils';
+import { Injectable } from '@nestjs/common';
+import { LoginDto } from './dto/login.dto';
+import { User } from '../user/entities/user.entity';
+import { JwtService } from '@nestjs/jwt';
+import { UserService } from '../user/user.service';
+import { RegisterDto } from './dto/register.dto';
+
+@Injectable()
+export class AuthService extends BaseService {
+  constructor(
+    private readonly userService: UserService,
+    private readonly jwtService: JwtService,
+  ) {
+    super();
+  }
+
+  /**
+   * 登录
+   *
+   * @param {LoginDto} loginDto
+   * @return {*}
+   * @memberof AuthService
+   */
+  async login(loginDto: LoginDto) {
+    const user = await this.checkLoginForm(loginDto);
+    const token = await this.certificate(user);
+
+    return {
+      token: `Bearer ${token}`,
+    };
+  }
+
+  /**
+   * 校验登录数据
+   *
+   * @param {LoginDto} loginDto
+   * @return {*}
+   * @memberof AuthService
+   */
+  async checkLoginForm(loginDto: LoginDto) {
+    const { username, password } = loginDto;
+    const user = await this.userService.findUserByUsername(username);
+
+    const { password: dbPassword, salt } = user ?? {};
+    const curHashPassword = encryptPassword(password, salt);
+    if (!user || curHashPassword !== dbPassword) {
+      this.error('用户名或密码错误');
+    }
+
+    return user;
+  }
+
+  /**
+   * 生成 token
+   *
+   * @param {User} user
+   * @return {*}
+   * @memberof AuthService
+   */
+  async certificate(user: User) {
+    const payload = {
+      id: user.id,
+      username: user.username,
+      mobile: user.mobile,
+    };
+    const token = this.jwtService.sign(payload);
+    return token;
+  }
+
+  /**
+   * 用户注册
+   *
+   * @param {RegisterDto} registerDto
+   * @return {*}
+   * @memberof AuthService
+   */
+  async register(registerDto: RegisterDto) {
+    await this.checkRegisterForm(registerDto);
+
+    const { username, nickname, password, mobile } = registerDto;
+    // 制作密码盐
+    const salt = makeSalt();
+    // 加密密码
+    const hashPassword = encryptPassword(password, salt);
+    console.log(salt, hashPassword);
+
+    const newUser = new User();
+    newUser.username = username;
+    newUser.nickname = nickname;
+    newUser.mobile = mobile;
+    newUser.password = hashPassword;
+    newUser.salt = salt;
+
+    const result = await this.userService.create(newUser);
+    delete result.password;
+    delete result.salt;
+    return result;
+  }
+
+  /**
+   * 校验注册数据
+   *
+   * @param {RegisterDto} registerDto
+   * @memberof AuthService
+   */
+  async checkRegisterForm(registerDto: RegisterDto) {
+    if (registerDto.password !== registerDto.passwordRepeat) {
+      this.error('两次输入的密码不一致，请检查');
+    }
+
+    const { username } = registerDto;
+    const hasUser = await this.userService.findUserByUsername(username);
+    if (hasUser) {
+      this.error('用户名已存在');
+    }
+  }
+
+  // 校验 token
+  verifyToken(token: string): User {
+    try {
+      if (!token) return null;
+      const tokenUser = this.jwtService.verify(token.replace('Bearer ', ''));
+      // console.log(user);
+      return tokenUser;
+    } catch (err) {
+      return null;
+    }
+  }
+}

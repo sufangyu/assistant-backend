@@ -13,6 +13,7 @@ import { RobotService } from './robot.service';
 import { CreateRobotDto } from './dto/create-robot.dto';
 import { UpdateRobotDto, UpdateRobotStatusDto } from './dto/update-robot.dto';
 import { QueryRobot, ReportTypeRobotDto } from './dto/query-robot.dto';
+import { NoAuth } from '@/decorator/no-auth.decorator';
 
 @ApiTags('机器人')
 @Controller('robot')
@@ -24,6 +25,7 @@ export class RobotController {
     return this.robotService.create(createRobotDto);
   }
 
+  @NoAuth()
   @Get()
   findAll() {
     return this.robotService.findAll();

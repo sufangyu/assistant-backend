@@ -13,6 +13,7 @@ import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { QueryCategory } from './dto/query-category.dto';
+import { NoAuth } from '@/decorator/no-auth.decorator';
 
 @ApiTags('分类')
 @Controller('category')
@@ -24,6 +25,7 @@ export class CategoryController {
     return this.categoryService.create(createCategoryDto);
   }
 
+  @NoAuth()
   @Get()
   findAll() {
     return this.categoryService.findAll();

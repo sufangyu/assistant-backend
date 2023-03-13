@@ -13,6 +13,7 @@ import { PushRecordService } from './push-record.service';
 import { CreatePushRecordDto } from './dto/create-push-record.dto';
 import { UpdatePushRecordDto } from './dto/update-push-record.dto';
 import { PushRecordQueryRobotDto } from './dto/query-push-record.dto';
+import { User } from '@/decorator/user.decorator';
 
 @ApiTags('推送记录')
 @Controller('push-record')

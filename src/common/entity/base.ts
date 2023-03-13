@@ -1,9 +1,4 @@
-import {
-  BaseEntity,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { BaseEntity, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 export class CommonBaseEntity extends BaseEntity {
   @CreateDateColumn({

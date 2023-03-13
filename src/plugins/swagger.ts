@@ -11,6 +11,7 @@ export function swaggerSetup(app: INestApplication) {
   const config = new DocumentBuilder()
     .setTitle('Work Tools APP API')
     .setVersion('1.0')
+    .addBearerAuth()
     // .addTag('cats')
     .build();
   const document = SwaggerModule.createDocument(app, config);
