@@ -15,7 +15,7 @@ import { PushRecordModule } from './module/push-record/push-record.module';
 import { UserModule } from './module/user/user.module';
 import { JwtAuthGuard } from './guard/auth.guard';
 import { AuthModule } from './module/auth/auth.module';
-import { TypeOrmConfigService } from './config/typeorm.config';
+import { TypeOrmConfigService } from './config';
 
 console.log('process.env.NODE_ENV:', process.env.NODE_ENV);
 
