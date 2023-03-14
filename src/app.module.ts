@@ -15,6 +15,7 @@ import { PushRecordModule } from './module/push-record/push-record.module';
 import { UserModule } from './module/user/user.module';
 import { JwtAuthGuard } from './guard/auth.guard';
 import { AuthModule } from './module/auth/auth.module';
+import { TypeOrmConfigService } from './config/typeorm.config';
 
 console.log('process.env.NODE_ENV:', process.env.NODE_ENV);
 
@@ -25,17 +26,8 @@ console.log('process.env.NODE_ENV:', process.env.NODE_ENV);
       envFilePath: `.env.${process.env.NODE_ENV}`,
       isGlobal: true,
     }),
-    TypeOrmModule.forRoot({
-      type: 'mysql',
-      host: process.env.MYSQL_HOST,
-      port: Number(process.env.MYSQL_PORT),
-      username: process.env.MYSQL_USER,
-      password: process.env.MYSQL_PASSWORD,
-      database: process.env.MYSQL_DATABASE,
-      entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      autoLoadEntities: true,
-      synchronize: process.env.NODE_ENV === 'development', // 不能被用于生产环境, 可能会丢失生产环境数据
-      logging: ['error'],
+    TypeOrmModule.forRootAsync({
+      useClass: TypeOrmConfigService,
     }),
     ScheduleModule.forRoot(),
     ShareModule,
