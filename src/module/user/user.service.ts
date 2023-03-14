@@ -1,18 +1,21 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BaseService } from '@/common/service/base';
+import { encryptPassword, makeSalt, randomPassword } from '@/utils';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
-import { encryptPassword, makeSalt, randomPassword } from '@/utils';
 import { QueryUser } from './dto/query-user.dto';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable()
 export class UserService extends BaseService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @Inject(forwardRef(() => AuthService))
+    private readonly authService: AuthService,
   ) {
     super();
   }
@@ -85,6 +88,11 @@ export class UserService extends BaseService {
       qb.andWhere('user.status like :status', { status: `${query.status}` });
     }
 
+    // 角色
+    if (query.role) {
+      qb.andWhere('user.role like :role', { role: `${query.role}` });
+    }
+
     // 时间查询
     if (query.start && query.end) {
       qb.andWhere('user.created_at BETWEEN :start AND :end', {
@@ -111,6 +119,20 @@ export class UserService extends BaseService {
     return this.userRepository.findOneBy({ id });
   }
 
+  /**
+   * 获取用户详情（基于token）
+   *
+   * @memberof UserService
+   */
+  async findDetail(token: string) {
+    const { username } = await this.authService.verifyToken(token);
+    const user = await this.findUserByUsername(username);
+    delete user.password;
+    delete user.salt;
+
+    return user;
+  }
+
   async update(id: number, updateUserDto: UpdateUserDto) {
     const result = await this.getUserWithError(id);
 
@@ -127,6 +149,30 @@ export class UserService extends BaseService {
 
     result.status = updateUserDto.status;
     return this.userRepository.update(+id, result);
+  }
+
+  /**
+   * 重置密码
+   *
+   * @param {number} id
+   * @return {*}
+   * @memberof UserService
+   */
+  async resetPassword(id: number) {
+    const result = await this.getUserWithError(id);
+    // 随机密码
+    const password = randomPassword();
+    // 制作密码盐
+    const salt = makeSalt();
+    // 加密密码
+    const hashPassword = encryptPassword(password, salt);
+
+    result.salt = salt;
+    result.password = hashPassword;
+    await this.userRepository.update(+id, result);
+    return {
+      password,
+    };
   }
 
   async remove(id: number) {

@@ -4,6 +4,7 @@ import {
   IsOptional,
   MinLength,
   IsEnum,
+  MaxLength,
 } from 'class-validator';
 import { RoleTypeEnum, StatusEnum } from '@/enum';
 
@@ -17,7 +18,8 @@ export class CreateUserDto {
   readonly nickname?: string;
 
   @IsString()
-  @MinLength(11)
+  @MaxLength(11, { message: '手机号只能是11位数字' })
+  @MinLength(11, { message: '手机号只能是11位数字' })
   // @IsNotEmpty({ message: '手机号不能为空' })
   @IsOptional()
   readonly mobile?: string;

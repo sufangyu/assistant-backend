@@ -56,7 +56,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       message = exception.message;
     }
 
-    response.status(200).json({
+    response.status(exception.status ?? 200).json({
       success: status >= 200 && status <= 300,
       statusCode: status,
       timestamp: new Date().toLocaleString(),

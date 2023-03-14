@@ -7,9 +7,11 @@ import {
   Param,
   Delete,
   Query,
+  Req,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { Roles } from '@/decorator/roles.decorator';
+import { Request } from 'express';
+import { NoAuth, Roles } from '@/decorator';
 import { RoleTypeEnum } from '@/enum';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -37,6 +39,13 @@ export class UserController {
     return this.userService.findListWithQuery(query);
   }
 
+  // @NoAuth()
+  @Get('detail')
+  findDetail(@Req() req: Request) {
+    const accessToken = req.get('Authorization');
+    return this.userService.findDetail(accessToken);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.userService.findOne(+id);
@@ -50,6 +59,11 @@ export class UserController {
   @Patch('/status/:id')
   updateStatus(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.userService.updateStatus(+id, updateUserDto);
+  }
+
+  @Patch('/reset/:id')
+  resetPassword(@Param('id') id: string) {
+    return this.userService.resetPassword(+id);
   }
 
   @Delete(':id')
