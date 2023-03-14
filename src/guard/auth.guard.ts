@@ -53,8 +53,8 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       context.getClass(),
     ]);
     const hasRoleAuth = (requiredRoles ?? []).includes(role);
-    if (!hasRoleAuth) {
-      throw new HttpException('没有权限访问', HttpStatus.FORBIDDEN);
+    if (requiredRoles && !hasRoleAuth) {
+      throw new HttpException('接口没有权限访问', HttpStatus.FORBIDDEN);
     }
     return this.activate(context);
   }
