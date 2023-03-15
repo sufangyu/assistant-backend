@@ -11,7 +11,7 @@ import {
   RobotMessageTemplateEnum,
   StatusEnum,
 } from '@/enum';
-import { getRobotMessageConfig } from '@/utils';
+import { getPagination, getRobotMessageConfig } from '@/utils';
 import { CreateRobotDto } from './dto/create-robot.dto';
 import { UpdateRobotDto, UpdateRobotStatusDto } from './dto/update-robot.dto';
 import { QueryRobot, ReportTypeRobotDto } from './dto/query-robot.dto';
@@ -79,8 +79,7 @@ export class RobotService extends BaseService {
     }
 
     // 分页. 一页最多查 100 条数据; 默认查10条
-    const size = query.size ? Math.min(query.size, 100) : 10;
-    const page = query.page ?? 1;
+    const { page, size } = getPagination(query.page, query.size);
     qb.skip(size * (page - 1)).take(size);
 
     const [list, total] = await qb.getManyAndCount();
@@ -206,14 +205,14 @@ export class RobotService extends BaseService {
       };
       if (!isSuccess) {
         // 失败：推送结果记录入库, 跳出循环
-        this.pushRecordService.create(pushRecordResult);
+        await this.pushRecordService.create(pushRecordResult);
         this.error('推送失败, 请手动推送');
         break;
       }
 
       if (isRepush && isSuccess && i >= robots.length - 1) {
         // 更新数据
-        this.pushRecordService.update(query.id, pushRecordResult);
+        await this.pushRecordService.update(query.id, pushRecordResult);
       }
     }
   }

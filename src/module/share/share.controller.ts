@@ -20,6 +20,7 @@ import {
   TrendQueryDto,
 } from './dto/query-share.dto';
 import { UpdateShareDto } from './dto/update-share.dto';
+import { NoAuth } from '@/decorator';
 
 @ApiTags('分享内容')
 @Controller('share')
@@ -48,6 +49,7 @@ export class ShareController {
    * @return {*}
    * @memberof ShareController
    */
+  @NoAuth()
   @Get('filed')
   async findAllFiled(@Query() query: QueryShareFiledDto) {
     return this.shareService.findAllFiled(query);

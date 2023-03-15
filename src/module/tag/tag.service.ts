@@ -6,6 +6,7 @@ import { Tag } from './entities/tag.entity';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
 import { QueryTag } from './dto/query-tag.dto';
+import { getPagination } from '@/utils';
 
 @Injectable()
 export class TagService extends BaseService {
@@ -48,15 +49,15 @@ export class TagService extends BaseService {
     }
 
     // 分页. 一页最多查 100 条数据; 默认查10条
-    const size = query.size ? Math.min(query.size, 100) : 10;
-    qb.skip(size * (query.page - 1)).take(size);
+    const { page, size } = getPagination(query.page, query.size);
+    qb.skip(size * (page - 1)).take(size);
 
     const [list, total] = await qb.getManyAndCount();
     return {
       total,
       list,
-      page: query.page,
-      size: size,
+      page,
+      size,
     };
   }
 

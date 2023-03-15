@@ -22,7 +22,7 @@ import {
   QueryShareTrendDto,
   TrendQueryDto,
 } from './dto/query-share.dto';
-import { getDatesByRange } from '@/utils';
+import { getDatesByRange, getPagination } from '@/utils';
 import { ReportTypeRobotDto } from '../robot/dto/query-robot.dto';
 
 // 增强 dayjs
@@ -137,8 +137,7 @@ export class ShareService extends BaseService {
     }
 
     // 分页. 一页最多查 100 条数据; 默认查10条
-    const size = query.size ? Math.min(query.size, 100) : 10;
-    const page = query.page ?? 1;
+    const { page, size } = getPagination(query.page, query.size);
     qb.skip(size * (page - 1)).take(size);
 
     const [list, total] = await qb.getManyAndCount();

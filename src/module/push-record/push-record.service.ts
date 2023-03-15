@@ -9,6 +9,7 @@ import { PushRecordQueryRobotDto } from './dto/query-push-record.dto';
 import { PushResultModuleEnum } from '@/enum';
 import { RobotService } from '../robot/robot.service';
 import { ReportTypeRobotDto } from '../robot/dto/query-robot.dto';
+import { getPagination } from '@/utils';
 
 @Injectable()
 export class PushRecordService extends BaseService {
@@ -28,6 +29,7 @@ export class PushRecordService extends BaseService {
   findAll() {
     return this.pushRecordRepository.find();
   }
+
   /**
    * 列表分页查询
    *
@@ -54,10 +56,10 @@ export class PushRecordService extends BaseService {
     }
 
     // 分页. 一页最多查 100 条数据; 默认查10条
-    const size = query.size ? Math.min(query.size, 100) : 10;
-    const page = query.page ?? 1;
+    const { page, size } = getPagination(query.page, query.size);
+    console.log('page, size:', page, size);
+
     qb.skip(size * (page - 1)).take(size);
-    // console.log(qb.getSql());
 
     const [list, total] = await qb.getManyAndCount();
     return {
@@ -109,7 +111,7 @@ export class PushRecordService extends BaseService {
           year: year,
           value: value,
         };
-        this.robotService.sendMessageReportForShare(query, true);
+        await this.robotService.sendMessageReportForShare(query, true);
         break;
     }
   }

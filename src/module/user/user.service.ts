@@ -2,7 +2,12 @@ import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BaseService } from '@/common/service/base';
-import { encryptPassword, makeSalt, randomPassword } from '@/utils';
+import {
+  encryptPassword,
+  getPagination,
+  makeSalt,
+  randomPassword,
+} from '@/utils';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -102,8 +107,7 @@ export class UserService extends BaseService {
     }
 
     // 分页. 一页最多查 100 条数据; 默认查10条
-    const size = query.size ? Math.min(query.size, 100) : 10;
-    const page = query.page ?? 1;
+    const { page, size } = getPagination(query.page, query.size);
     qb.skip(size * (page - 1)).take(size);
 
     const [list, total] = await qb.getManyAndCount();
