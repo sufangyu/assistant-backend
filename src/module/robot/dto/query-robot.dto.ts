@@ -7,6 +7,7 @@ import {
   IsString,
   IsNumber,
 } from 'class-validator';
+import { PushRecordResult } from '@/module/push-record/entities/push-record.entity';
 
 export class QueryRobot extends BaseQuery {
   name?: string;
@@ -32,4 +33,6 @@ export class ReportTypeRobotDto {
   @IsString()
   @IsOptional()
   value?: number;
+
+  results?: PushRecordResult[];
 }

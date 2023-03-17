@@ -1,5 +1,5 @@
-import { IsString, IsNotEmpty, IsEnum } from 'class-validator';
-import { PushResultEnum, PushResultModuleEnum } from '@/enum';
+import { IsString, IsNotEmpty, IsEnum, IsOptional } from 'class-validator';
+import { PushResultModuleEnum } from '@/enum';
 
 export class CreatePushRecordDto {
   @IsEnum(PushResultModuleEnum)
@@ -8,9 +8,9 @@ export class CreatePushRecordDto {
   module: string;
 
   @IsString()
-  variable: string;
+  @IsOptional()
+  title?: string;
 
-  @IsEnum(PushResultEnum)
-  @IsNotEmpty({ message: '推送结果不能为空' })
-  result: number;
+  @IsString()
+  variable: string;
 }

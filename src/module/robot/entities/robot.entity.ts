@@ -5,11 +5,13 @@ import {
   DeleteDateColumn,
   Entity,
   ManyToMany,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Share } from '@/module/share/entities/share.entity';
 import { RobotTypeEnum, StatusEnum } from '@/enum';
+import { PushRecordResult } from '@/module/push-record/entities/push-record.entity';
 
 @Entity()
 export class Robot extends BaseEntity {
@@ -60,6 +62,9 @@ export class Robot extends BaseEntity {
 
   @ManyToMany(() => Share, (share) => share.robots)
   public shares: Share[];
+
+  @OneToMany(() => PushRecordResult, (result) => result.robot)
+  public results: PushRecordResult[];
 
   @CreateDateColumn({
     type: 'timestamp',

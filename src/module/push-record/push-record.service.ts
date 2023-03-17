@@ -4,9 +4,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { BaseService } from '@/common/service/base';
 import { CreatePushRecordDto } from './dto/create-push-record.dto';
 import { UpdatePushRecordDto } from './dto/update-push-record.dto';
-import { PushRecord } from './entities/push-record.entity';
+import { PushRecord, PushRecordResult } from './entities/push-record.entity';
 import { PushRecordQueryRobotDto } from './dto/query-push-record.dto';
-import { PushResultModuleEnum } from '@/enum';
+import { PushResultModuleEnum, StatusEnum } from '@/enum';
 import { RobotService } from '../robot/robot.service';
 import { ReportTypeRobotDto } from '../robot/dto/query-robot.dto';
 import { getPagination } from '@/utils';
@@ -16,14 +16,32 @@ export class PushRecordService extends BaseService {
   constructor(
     @InjectRepository(PushRecord)
     private readonly pushRecordRepository: Repository<PushRecord>,
+    @InjectRepository(PushRecordResult)
+    private readonly pushRecordResultRepository: Repository<PushRecordResult>,
     @Inject(forwardRef(() => RobotService))
     private readonly robotService: RobotService,
   ) {
     super();
   }
 
-  create(createPushRecordDto: CreatePushRecordDto) {
-    return this.pushRecordRepository.save(createPushRecordDto);
+  async create(
+    createPushRecordDto: CreatePushRecordDto,
+    pushResultList?: Partial<PushRecordResult>[],
+  ) {
+    // 写记录
+    const record = await this.pushRecordRepository.save(createPushRecordDto);
+
+    // 写结果
+    const values = pushResultList.map((res) => {
+      const recordResult = new PushRecordResult();
+      recordResult.pushRecord = record;
+      recordResult.robot = res.robot;
+      recordResult.result = res.result;
+      return recordResult;
+    });
+    const pushResult = await this.pushRecordResultRepository.save(values);
+    record.results = JSON.parse(JSON.stringify(pushResult));
+    return record;
   }
 
   findAll() {
@@ -39,10 +57,16 @@ export class PushRecordService extends BaseService {
    */
   async findListWithQuery(query: PushRecordQueryRobotDto) {
     const qb = this.pushRecordRepository.createQueryBuilder('pushRecord');
+    qb.leftJoinAndSelect('pushRecord.results', 'results')
+      .leftJoinAndSelect('results.robot', 'robot')
+      .select('pushRecord')
+      .addSelect(['results'])
+      .addSelect('robot')
+      .andWhere('robot.status like :status', { status: StatusEnum.NORMAL });
 
     // 推送结果
     if (query.result) {
-      qb.andWhere('pushRecord.result like :result', {
+      qb.andWhere('results.result like :result', {
         result: `${query.result}`,
       });
     }
@@ -57,8 +81,6 @@ export class PushRecordService extends BaseService {
 
     // 分页. 一页最多查 100 条数据; 默认查10条
     const { page, size } = getPagination(query.page, query.size);
-    console.log('page, size:', page, size);
-
     qb.skip(size * (page - 1)).take(size);
 
     const [list, total] = await qb.getManyAndCount();
@@ -71,7 +93,11 @@ export class PushRecordService extends BaseService {
   }
 
   findOne(id: number) {
-    return this.pushRecordRepository.findOneBy({ id });
+    // return this.pushRecordRepository.findOneBy({ id });
+    return this.pushRecordRepository.findOne({
+      where: { id },
+      relations: ['results', 'results.robot'],
+    });
   }
 
   async update(id: number, updatePushRecordDto: UpdatePushRecordDto) {
@@ -82,6 +108,24 @@ export class PushRecordService extends BaseService {
     }
 
     return this.pushRecordRepository.update(+id, updatePushRecordDto);
+  }
+
+  /**
+   * 更新推送结果
+   *
+   * @param {Partial<PushRecordResult>[]} results 推送结果集合
+   * @memberof PushRecordService
+   */
+  async updateResult(results: Partial<PushRecordResult>[]) {
+    // 更新推送记录
+    const newResult = results.map((r) => {
+      const result = new PushRecordResult();
+      result.id = r.id;
+      result.result = r.result;
+      return result;
+    });
+
+    return this.pushRecordResultRepository.save(newResult);
   }
 
   async remove(id: number) {
@@ -107,9 +151,10 @@ export class PushRecordService extends BaseService {
         console.log('推送功能模块：分享，参数', type, year, value);
         const query: ReportTypeRobotDto = {
           id: pushRecord.id,
-          type: type,
-          year: year,
-          value: value,
+          type,
+          year,
+          value,
+          results: pushRecord.results,
         };
         await this.robotService.sendMessageReportForShare(query, true);
         break;

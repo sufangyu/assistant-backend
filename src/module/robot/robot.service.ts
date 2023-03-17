@@ -19,6 +19,7 @@ import { Robot } from './entities/robot.entity';
 import { Share } from '../share/entities/share.entity';
 import { ShareService } from '../share/share.service';
 import { PushRecordService } from '../push-record/push-record.service';
+import { PushRecordResult } from '../push-record/entities/push-record.entity';
 
 // 增强 dayjs
 dayjs.extend(quarterOfYear);
@@ -44,6 +45,13 @@ export class RobotService extends BaseService {
   findAll() {
     return this.robotRepository.find({
       where: { status: Like(StatusEnum.NORMAL) },
+    });
+  }
+
+  findByIds(ids: number[]) {
+    return this.robotRepository.findBy({
+      id: In([ids]),
+      status: Like(StatusEnum.NORMAL),
     });
   }
 
@@ -178,42 +186,51 @@ export class RobotService extends BaseService {
     const title = isMonthType
       ? `【好文报告】${query.value}月份推荐`
       : `【好文报告】第${query.value}季度推荐`;
-    // console.log('获取报告数据查询条件：', query);
 
     // 1. 获取数据列表
     const data = await this.shareService.findListForReport(query);
+
     // 2. 获取配置
     const config = getRobotMessageConfig(templates[query.type], data, title);
+
     // 3. 获取要发送机器人集合
-    const robots = await this.findAll();
-    // 4. 循环机器人集合发送信息
-    // TODO: 关联失败的机器人
+    let robots: Robot[];
+    if (isRepush && (query.results ?? []).length > 0) {
+      const ids = (query.results ?? []).map((r) => r.robot.id);
+      robots = await this.findByIds(ids);
+    } else {
+      robots = await this.findAll();
+    }
+
+    // 4. 循环机器人集合发送信息, 并记录推送结果（新增记录+推送结果、更新推送结果）
+    const pushResultList: Partial<PushRecordResult>[] = [];
     for (let i = 0; i < robots.length; i++) {
       const robot = robots[i];
       const res = await this.httpService.axiosRef.post<{ code: number }>(
         robot.webhook,
         config,
       );
-      console.log(res.data);
+      console.log('推送结果：', res.data);
 
-      // 5. 记录（新增、更新）
       const isSuccess = res.data?.code === 0;
-      const pushRecordResult = {
-        module: PushResultModuleEnum.SHARE,
-        variable: JSON.stringify(query),
+      const result = {
+        id: isRepush ? query.results[i].id : null,
+        robot,
         result: isSuccess ? PushResultEnum.SUCCESS : PushResultEnum.FAIL,
       };
-      if (!isSuccess) {
-        // 失败：推送结果记录入库, 跳出循环
-        await this.pushRecordService.create(pushRecordResult);
-        this.error('推送失败, 请手动推送');
-        break;
-      }
-
-      if (isRepush && isSuccess && i >= robots.length - 1) {
-        // 更新数据
-        await this.pushRecordService.update(query.id, pushRecordResult);
-      }
+      pushResultList.push(result);
     }
+
+    const record = {
+      title,
+      module: PushResultModuleEnum.SHARE,
+      variable: JSON.stringify(query),
+    };
+
+    if (isRepush) {
+      return this.pushRecordService.updateResult(pushResultList);
+    }
+
+    return this.pushRecordService.create(record, pushResultList);
   }
 }

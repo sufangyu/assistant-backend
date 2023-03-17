@@ -39,7 +39,7 @@ export class UserController {
     return this.userService.findListWithQuery(query);
   }
 
-  // @NoAuth()
+  @NoAuth()
   @Get('detail')
   findDetail(@Req() req: Request) {
     const accessToken = req.get('Authorization');
