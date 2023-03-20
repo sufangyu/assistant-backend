@@ -82,6 +82,7 @@ export class ShareController {
   }
 
   @Get('website')
+  @NoAuth()
   websiteInfo(@Query('url') url: string) {
     return this.shareService.getWebsiteInfo(url);
   }

@@ -17,10 +17,10 @@ import { PushResultEnum } from '@/enum';
  * 推送记录
  *
  * @export
- * @class PushRecordResult
+ * @class PushRecord
  * @extends
  */
-@Entity()
+@Entity('push_record')
 export class PushRecord extends BaseEntity {
   @PrimaryGeneratedColumn({
     type: 'int',
@@ -93,7 +93,7 @@ export class PushRecord extends BaseEntity {
  * @class PushRecordResult
  * @extends {BaseEntity}
  */
-@Entity()
+@Entity('push_record_result')
 export class PushRecordResult extends BaseEntity {
   @PrimaryGeneratedColumn({
     type: 'int',

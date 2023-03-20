@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { RoleTypeEnum, StatusEnum } from '@/enum';
 
-@Entity()
+@Entity('user')
 export class User {
   @PrimaryGeneratedColumn({
     type: 'int',

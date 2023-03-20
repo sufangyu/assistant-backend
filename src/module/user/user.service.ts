@@ -108,7 +108,9 @@ export class UserService extends BaseService {
 
     // 分页. 一页最多查 100 条数据; 默认查10条
     const { page, size } = getPagination(query.page, query.size);
-    qb.skip(size * (page - 1)).take(size);
+    qb.orderBy('user.created_at', 'DESC')
+      .skip(size * (page - 1))
+      .take(size);
 
     const [list, total] = await qb.getManyAndCount();
     return {

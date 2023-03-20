@@ -60,6 +60,8 @@ export class PushRecordService extends BaseService {
     qb.leftJoinAndSelect('pushRecord.results', 'results')
       .leftJoinAndSelect('results.robot', 'robot')
       .select('pushRecord')
+      // Fix: .orderBy('pushRecord.created_at', 'DESC') 与 take 时报错问题
+      .addSelect('pushRecord.created_at', 'createdAt')
       .addSelect(['results'])
       .addSelect('robot')
       .andWhere('robot.status like :status', { status: StatusEnum.NORMAL });
@@ -81,7 +83,9 @@ export class PushRecordService extends BaseService {
 
     // 分页. 一页最多查 100 条数据; 默认查10条
     const { page, size } = getPagination(query.page, query.size);
-    qb.skip(size * (page - 1)).take(size);
+    qb.orderBy('createdAt', 'DESC')
+      .skip(size * (page - 1))
+      .take(size);
 
     const [list, total] = await qb.getManyAndCount();
     return {

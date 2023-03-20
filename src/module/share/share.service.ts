@@ -112,6 +112,7 @@ export class ShareService extends BaseService {
         'share.description',
         'share.createdAt',
       ])
+      .addSelect('share.created_at', 'createdAt')
       .addSelect(['category.id', 'category.name'])
       .addSelect(['tags.id', 'tags.name'])
       .addSelect(['robots.id', 'robots.name', 'robots.webhook']);
@@ -138,7 +139,9 @@ export class ShareService extends BaseService {
 
     // 分页. 一页最多查 100 条数据; 默认查10条
     const { page, size } = getPagination(query.page, query.size);
-    qb.skip(size * (page - 1)).take(size);
+    qb.orderBy('createdAt', 'DESC')
+      .skip(size * (page - 1))
+      .take(size);
 
     const [list, total] = await qb.getManyAndCount();
     return {

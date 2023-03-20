@@ -13,7 +13,7 @@ import { Share } from '@/module/share/entities/share.entity';
 import { RobotTypeEnum, StatusEnum } from '@/enum';
 import { PushRecordResult } from '@/module/push-record/entities/push-record.entity';
 
-@Entity()
+@Entity('robot')
 export class Robot extends BaseEntity {
   @PrimaryGeneratedColumn({
     type: 'int',

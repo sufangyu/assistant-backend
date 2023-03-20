@@ -15,7 +15,7 @@ import { Category } from '@/module/category/entities/category.entity';
 import { Tag } from '@/module/tag/entities/tag.entity';
 import { Robot } from '@/module/robot/entities/robot.entity';
 
-@Entity()
+@Entity('share')
 export class Share extends BaseEntity {
   @PrimaryGeneratedColumn({
     type: 'int',

@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 import { Share } from '@/module/share/entities/share.entity';
 
-@Entity()
+@Entity('tag')
 export class Tag extends BaseEntity {
   @PrimaryGeneratedColumn({
     type: 'int',
