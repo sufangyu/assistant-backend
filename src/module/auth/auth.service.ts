@@ -1,11 +1,13 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { BaseService } from '@/common/service/base';
+import { BaseService } from '@/common/service/base.service';
+import { CacheService } from '@/common/service/cache.service';
 import { encryptPassword, makeSalt } from '@/utils';
 import { LoginDto } from './dto/login.dto';
 import { User } from '../user/entities/user.entity';
 import { UserService } from '../user/user.service';
 import { RegisterDto } from './dto/register.dto';
+import { REDIS_ACCESS_TOKEN_PREFIX } from '@/constant';
 
 @Injectable()
 export class AuthService extends BaseService {
@@ -13,6 +15,7 @@ export class AuthService extends BaseService {
     @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
+    private readonly redisService: CacheService,
   ) {
     super();
   }
@@ -27,6 +30,20 @@ export class AuthService extends BaseService {
   async login(loginDto: LoginDto) {
     const user = await this.checkLoginForm(loginDto);
     const token = await this.certificate(user);
+
+    // 获取缓存的值
+    // const cacheToken = await this.redisService.get(
+    //   `${REDIS_ACCESS_TOKEN_PREFIX}-${user.id}`,
+    // );
+    // if (token !== JSON.parse(cacheToken)) {
+    //   this.error('你已经在另一处登录，请重新登录', 401);
+    // }
+    const second = 60 * 60 * 24 * 7;
+    await this.redisService.set(
+      `${REDIS_ACCESS_TOKEN_PREFIX}${user.id}`,
+      token,
+      second,
+    );
 
     return {
       token: `Bearer ${token}`,
@@ -67,6 +84,7 @@ export class AuthService extends BaseService {
       mobile: user.mobile,
     };
     const token = this.jwtService.sign(payload);
+
     return token;
   }
 

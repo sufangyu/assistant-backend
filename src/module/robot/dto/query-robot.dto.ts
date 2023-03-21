@@ -1,4 +1,4 @@
-import { BaseQuery } from '@/common/dto/base';
+import { BaseQuery } from '@/common/dto/base.dto';
 import { RobotType, StatusType } from '@/enum';
 import {
   IsIn,

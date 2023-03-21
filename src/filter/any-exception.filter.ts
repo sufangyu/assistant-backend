@@ -23,13 +23,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
   ) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse();
-    const request = ctx.getRequest();
+    const { method, url } = ctx.getRequest();
 
-    console.log(
-      `--------------- ${request.method}, ${request.url} ------------------`,
-    );
+    console.log(`--------------- ${method}, ${url} ------------------`);
     console.error('AllExceptionsFilter exception: ', exception);
-    console.log('---------------------------------');
+    console.log('-------------------------------------------');
 
     const status =
       exception instanceof HttpException
@@ -46,7 +44,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       : exception?.response?.message || exception?.response;
 
     // EntityPropertyNotFoundError：参数校验错误
-    // TypeError：数据库类型错误
+    // TypeError：类型错误
     if (
       exception instanceof EntityPropertyNotFoundError ||
       exception instanceof TypeError ||
@@ -61,7 +59,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       statusCode: status,
       timestamp: new Date().toLocaleString(),
       message,
-      path: request.url,
+      path: url,
     });
   }
 }

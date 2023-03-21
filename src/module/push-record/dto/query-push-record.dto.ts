@@ -1,4 +1,4 @@
-import { BaseQuery } from '@/common/dto/base';
+import { BaseQuery } from '@/common/dto/base.dto';
 import { PushResultEnum } from '@/enum';
 import { IsIn, IsOptional } from 'class-validator';
 

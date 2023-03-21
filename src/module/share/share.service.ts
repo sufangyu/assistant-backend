@@ -7,7 +7,7 @@ import { load } from 'cheerio';
 import { firstValueFrom } from 'rxjs';
 import * as dayjs from 'dayjs';
 import * as quarterOfYear from 'dayjs/plugin/quarterOfYear';
-import { BaseService } from '@/common/service/base';
+import { BaseService } from '@/common/service/base.service';
 import { RobotMessageTemplateEnum } from '@/enum';
 import { ListBase } from '@/type';
 import { Share } from './entities/share.entity';

@@ -1,11 +1,13 @@
 import { Dependencies, Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
+import { ConfigModule } from '@nestjs/config';
+import { RedisModule } from '@chenjm/nestjs-redis';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { TypeOrmConfigService } from './config';
 import { TasksService } from './schedule/tasks.service';
 import { ShareModule } from './module/share/share.module';
 import { CategoryModule } from './module/category/category.module';
@@ -15,7 +17,7 @@ import { PushRecordModule } from './module/push-record/push-record.module';
 import { UserModule } from './module/user/user.module';
 import { JwtAuthGuard } from './guard/auth.guard';
 import { AuthModule } from './module/auth/auth.module';
-import { TypeOrmConfigService } from './config';
+import { CacheService } from './common/service/cache.service';
 
 console.log('process.env.NODE_ENV:', process.env.NODE_ENV);
 
@@ -28,6 +30,21 @@ console.log('process.env.NODE_ENV:', process.env.NODE_ENV);
     }),
     TypeOrmModule.forRootAsync({
       useClass: TypeOrmConfigService,
+    }),
+    RedisModule.forRootAsync({
+      useFactory: () => {
+        return {
+          closeClient: true,
+          readyLog: true,
+          config: {
+            host: process.env.REDIS_HOST,
+            port: parseInt(process.env.REDIS_PORT),
+            password: process.env.REDIS_PASSWORD,
+            db: 0, // default,
+            keyPrefix: process.env.REDIS_PREFIX,
+          },
+        };
+      },
     }),
     ScheduleModule.forRoot(),
     ShareModule,
@@ -43,6 +60,7 @@ console.log('process.env.NODE_ENV:', process.env.NODE_ENV);
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     AppService,
     TasksService,
+    CacheService,
   ],
 })
 export class AppModule {

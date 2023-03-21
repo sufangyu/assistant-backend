@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { HttpService } from '@nestjs/axios';
 import * as dayjs from 'dayjs';
 import * as quarterOfYear from 'dayjs/plugin/quarterOfYear';
-import { BaseService } from '@/common/service/base';
+import { BaseService } from '@/common/service/base.service';
 import {
   PushResultEnum,
   PushResultModuleEnum,

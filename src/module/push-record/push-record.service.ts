@@ -1,7 +1,7 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BaseService } from '@/common/service/base';
+import { BaseService } from '@/common/service/base.service';
 import { CreatePushRecordDto } from './dto/create-push-record.dto';
 import { UpdatePushRecordDto } from './dto/update-push-record.dto';
 import { PushRecord, PushRecordResult } from './entities/push-record.entity';

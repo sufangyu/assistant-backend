@@ -6,8 +6,10 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
+import { CacheService } from '@/common/service/cache.service';
 import { UserService } from '@/module/user/user.service';
 import { AuthService } from '@/module/auth/auth.service';
+import { REDIS_ACCESS_TOKEN_PREFIX } from '@/constant';
 
 // Redis: https://blog.woolson.cn/notes/be/nestjs-role-permission.html
 // http://junyao.tech/posts/711762c9.html
@@ -15,9 +17,10 @@ import { AuthService } from '@/module/auth/auth.service';
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
   constructor(
-    private reflector: Reflector,
+    private readonly reflector: Reflector,
     private readonly authService: AuthService,
     private readonly userService: UserService,
+    private readonly redisService: CacheService,
   ) {
     super();
   }
@@ -35,16 +38,23 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
     const req = context.switchToHttp().getRequest();
     // const res = context.switchToHttp().getResponse();
-    const accessToken = req.get('Authorization');
-    const tokenUser = await this.authService.verifyToken(accessToken);
-    // console.log('tokenUser:', tokenUser);
+    const authorization =
+      req.get('Authorization') ?? req.get('authorization') ?? '';
+    const accessToken = authorization.replace('Bearer ', '');
+    if (!accessToken) {
+      throw new HttpException('未登录, 请先登录', HttpStatus.UNAUTHORIZED);
+    }
 
-    if (!accessToken || !tokenUser) {
-      // 如果有用户信息，代表 token 没有过期，没有则 token 已失效
-      throw new HttpException(
-        !accessToken ? '未登录, 请先登录' : '登录过时, 请重新登录',
-        HttpStatus.UNAUTHORIZED,
-      );
+    const tokenUser = await this.authService.verifyToken(accessToken);
+    const cacheToken = await this.redisService.get(
+      `${REDIS_ACCESS_TOKEN_PREFIX}${tokenUser.id}`,
+    );
+    // console.log('--------------------------');
+    // console.log('accessToken:', accessToken);
+    // console.log('cacheToken: ', cacheToken);
+    // console.log('--------------------------');
+    if (!tokenUser || !cacheToken) {
+      throw new HttpException('登录过时, 请重新登录', HttpStatus.UNAUTHORIZED);
     }
 
     const { role } = await this.userService.findOne(tokenUser?.id);
