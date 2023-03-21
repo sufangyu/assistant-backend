@@ -1,3 +1,4 @@
+import { Logger } from '@/utils';
 import {
   ExceptionFilter,
   Catch,
@@ -23,11 +24,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
   ) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse();
-    const { method, url } = ctx.getRequest();
+    const { method, url, originalUrl, ip } = ctx.getRequest();
 
-    console.log(`--------------- ${method}, ${url} ------------------`);
-    console.error('AllExceptionsFilter exception: ', exception);
-    console.log('-------------------------------------------');
+    // console.log(`--------------- ${method}, ${url} ------------------`);
+    // console.error('AllExceptionsFilter exception: ', exception);
+    // console.log('-------------------------------------------');
 
     const status =
       exception instanceof HttpException
@@ -43,15 +44,29 @@ export class AllExceptionsFilter implements ExceptionFilter {
       ? '请求失败，请检查参数'
       : exception?.response?.message || exception?.response;
 
-    // EntityPropertyNotFoundError：参数校验错误
-    // TypeError：类型错误
     if (
-      exception instanceof EntityPropertyNotFoundError ||
-      exception instanceof TypeError ||
+      exception instanceof EntityPropertyNotFoundError || // ：参数校验错误
+      exception instanceof TypeError || // ：类型错误
       exception instanceof Error ||
-      exception instanceof NotFoundException
+      exception instanceof NotFoundException // 找不到资源
     ) {
       message = exception.message;
+    }
+
+    const logFormat = ` <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    Request original url: ${originalUrl}
+    Method: ${method}
+    IP: ${ip}
+    Status code: ${status} - ${typeof status}
+    Response: ${exception.toString()} \n  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    `;
+
+    if (status >= 500) {
+      Logger.error(logFormat);
+    } else if (status >= 400) {
+      Logger.warn(logFormat);
+    } else {
+      Logger.info(logFormat);
     }
 
     response.status(exception.status ?? 200).json({

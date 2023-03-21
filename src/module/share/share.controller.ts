@@ -11,6 +11,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { NoAuth } from '@/decorator';
 import { ShareService } from './share.service';
 import { CreateShareDto } from './dto/create-share.dto';
 import {
@@ -20,13 +21,13 @@ import {
   TrendQueryDto,
 } from './dto/query-share.dto';
 import { UpdateShareDto } from './dto/update-share.dto';
-import { NoAuth } from '@/decorator';
 
 @ApiTags('分享内容')
 @Controller('share')
 export class ShareController {
   constructor(private readonly shareService: ShareService) {}
 
+  @NoAuth()
   @Post()
   create(@Body() createShareDto: CreateShareDto) {
     return this.shareService.create(createShareDto);

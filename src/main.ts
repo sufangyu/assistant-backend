@@ -1,8 +1,10 @@
 import { NestFactory } from '@nestjs/core';
+import * as express from 'express';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './filter/any-exception.filter';
 import { AllResponseInterceptor } from './interceptor/all-response.interceptor';
 import { ValidationPipe } from './pipe/validate.pipe';
+import { logger } from './middleware/logger/logger.middleware';
 import { swaggerSetup } from './plugins/swagger';
 
 async function bootstrap() {
@@ -22,6 +24,10 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalInterceptors(new AllResponseInterceptor());
   app.useGlobalFilters(new AllExceptionsFilter());
+  app
+    .use(express.json()) // For parsing application/json
+    .use(express.urlencoded({ extended: true })) // For parsing application/x-www-form-urlencoded
+    .use(logger);
 
   await app.listen(process.env.APP_PORT ?? 3000);
 }
