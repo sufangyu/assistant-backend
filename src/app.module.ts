@@ -5,6 +5,7 @@ import { DataSource } from 'typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { RedisModule } from '@chenjm/nestjs-redis';
 import { ScheduleModule } from '@nestjs/schedule';
+import { resolve } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmConfigService } from './config';
@@ -19,13 +20,15 @@ import { JwtAuthGuard } from './guard/auth.guard';
 import { AuthModule } from './module/auth/auth.module';
 import { CacheService } from './common/service/cache.service';
 
-console.log('process.env.NODE_ENV:', process.env.NODE_ENV);
+console.log('process.env:', process.env);
 
 @Dependencies(DataSource)
 @Module({
   imports: [
     ConfigModule.forRoot({
+      // envFilePath: resolve(__dirname, '../', `.env.${process.env.NODE_ENV}`),
       envFilePath: `.env.${process.env.NODE_ENV}`,
+      ignoreEnvFile: process.env.NODE_ENV !== 'development',
       isGlobal: true,
     }),
     TypeOrmModule.forRootAsync({
