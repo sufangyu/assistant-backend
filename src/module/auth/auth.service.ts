@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { forwardRef, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { BaseService } from '@/common/service/base.service';
 import { CacheService } from '@/common/service/cache.service';
@@ -83,9 +83,8 @@ export class AuthService extends BaseService {
       username: user.username,
       mobile: user.mobile,
     };
-    const token = this.jwtService.sign(payload);
 
-    return token;
+    return this.jwtService.sign(payload);
   }
 
   /**
@@ -139,11 +138,14 @@ export class AuthService extends BaseService {
   // 校验 token
   verifyToken(token: string): User {
     try {
-      if (!token) return null;
-      const tokenUser = this.jwtService.verify(token.replace('Bearer ', ''));
-      // console.log(user);
-      return tokenUser;
+      if (!token) {
+        return null;
+      }
+      return this.jwtService.verify<User>(token.replace('Bearer ', ''));
     } catch (err) {
+      if (err.message?.startsWith('jwt expired')) {
+        this.error('登录超时', HttpStatus.UNAUTHORIZED);
+      }
       return null;
     }
   }
