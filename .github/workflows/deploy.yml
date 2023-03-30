@@ -1,0 +1,72 @@
+name: Deploy CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  # 手动运行
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag"
+        required: false
+        default: "v1.0.0"
+
+# 自定义环境变量
+env:
+  SOURCE: "release.tgz"
+  TARGET: "/www/assistant-backend"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16.x]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+      - run: echo "Source => $SOURCE; Target => $TARGET, "
+
+      # 第一步：下载源码（CI/CD拉取代码到自己的本地）
+      - name: Checkout code
+        uses: actions/checkout@main
+
+      # 第二步：安装 pnpm 环境
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2.0.1
+        with:
+          version: 7.29.1
+
+      # 设置 Node.js 版本环境
+      - name: Setting Node.js Version ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+
+      # 安装依赖、打包、压缩
+      - run: pnpm install
+      - run: pnpm run build
+      - run: tar -zcvf release.tgz dist # 把dist等文件，打包压缩为release.tgz
+      - run: ls
+
+      # 第五步：部署到服务器
+      - name: Deploy
+        uses: easingthemes/ssh-deploy@main
+        with:
+          REMOTE_HOST: ${{ secrets.REMOTE_HOST }} # 服务器 IP
+          REMOTE_USER: ${{ secrets.REMOTE_USERNAME }} # 登录用户名
+          SSH_PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }} # 登录密钥
+          ARGS: "-avzr --delete"
+          SOURCE: ${{ env.SOURCE }}
+          TARGET: ${{ env.TARGET }}
+          SCRIPT_BEFORE: |
+            whoami
+            ls -al
+          # 上传完成后执行命令: 进入项目目录 => 解压缩 => 拷贝资源到 dist 目录下 => 启动/重启 pm2（pm2开启watch不用这步骤）
+          SCRIPT_AFTER: |
+            cd ${{ env.TARGET }}
+            tar zxvf ${{ env.SOURCE }}
+            yes | cp -r -f dist/* ./
