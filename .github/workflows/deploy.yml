@@ -48,7 +48,7 @@ jobs:
 
       # 安装依赖、打包、压缩
       - run: pnpm install
-      - run: pnpm run build
+      - run: pnpm run build:webpack
       - run: tar -zcvf release.tgz dist # 把dist等文件，打包压缩为release.tgz
       - run: ls
 
