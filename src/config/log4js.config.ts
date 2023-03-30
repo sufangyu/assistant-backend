@@ -16,6 +16,7 @@ export const log4jsConfig = {
       filename: `${baseLogPath}/access/access.log`,
       alwaysIncludePattern: true,
       pattern: 'yyyy-MM-dd',
+      mode: 0o777,
       daysToKeep: 60,
       numBackups: 3,
       category: 'http',
